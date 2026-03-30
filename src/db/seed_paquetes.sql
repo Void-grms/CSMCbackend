@@ -1,0 +1,1766 @@
+
+BEGIN;
+
+-- =============================================================================
+-- 0. ACTIVIDADES
+-- =============================================================================
+INSERT INTO actividad (id_actividad, codigo, nombre) VALUES
+    ('ACT1', '5005189', 'Tratamiento de personas con problemas psicosociales'),
+    ('ACT2', '5006281', 'Tratamiento ambulatorio de niños y niñas de 0 a 17 años con trastornos mentales y del comportamiento y/o problemas psicosociales propios de la infancia y la adolescencia.'),
+    ('ACT3', '5005190', 'Tratamiento ambulatorio de personas con trastornos afectivos (depresión y conducta suicida) y de ansiedad.'),
+    ('ACT4', '5006282', 'Tratamiento ambulatorio de personas con Trastorno del comportamiento debido al Consumo de alcohol y tabaco'),
+    ('ACT5', '5005195', 'Tratamiento ambulatorio de personas con síndrome o trastorno psicótico'),
+    ('ACT6', '5005197', 'Rehabilitación psicosocial de personas con síndrome o trastorno esquizofrénico')
+ON CONFLICT (id_actividad) DO UPDATE SET codigo = EXCLUDED.codigo, nombre = EXCLUDED.nombre;
+
+-- =============================================================================
+-- 1. PAQUETE DEFINICION
+-- =============================================================================
+INSERT INTO paquete_definicion (id_paquete, nombre, plazo_meses, id_actividad, codigo_paquete, edad_minima, edad_maxima) VALUES
+-- Actividad 1
+('PF_VIOLENCIA_FAMILIAR', 'Tratamiento especializado en violencia familiar', 8, 'ACT1', '1.1', 18, NULL),
+('PF_VIOLENCIA_SEXUAL', 'Tratamiento especializado de personas afectadas por violencia sexual', 8, 'ACT1', '1.2', 18, NULL),
+('PF_MALTRATO_NNA', 'Tratamiento de niños, niñas y adolescentes afectados por maltrato infantil', 8, 'ACT1', '1.3', NULL, 17),
+('PF_VS_NNA', 'Tratamiento especializado niños, niñas y adolescentes afectados por violencia sexual', 8, 'ACT1', '1.4', NULL, 17),
+-- Actividad 2
+('PF_AUTISMO', 'Tratamiento ambulatorio de niños y niñas de 0 a 17 años con trastorno de espectro autista', 8, 'ACT2', '2.1', NULL, 17),
+('PF_TM_COMPORTAMIENTO', 'Tratamiento ambulatorio de niños y niñas de 0 a 17 años por trastornos mentales y de comportamiento.', 8, 'ACT2', '2.2', NULL, 17),
+-- Actividad 3
+('PF_DEPRESION', 'Tratamiento ambulatorio de personas con depresión', 8, 'ACT3', '3.1', NULL, NULL),
+('PF_CONDUCTA_SUICIDA', 'Tratamiento ambulatorio de personas con conducta suicida', 8, 'ACT3', '3.2', NULL, NULL),
+('PF_ANSIEDAD', 'Tratamiento ambulatorio de personas con ansiedad', 8, 'ACT3', '3.3', NULL, NULL),
+-- Actividad 4
+('PF_CONSUMO_PERJUDICIAL', 'Intervenciones breves motivacionales para personas con consumo perjudicial del alcohol y tabaco', 8, 'ACT4', '4.1', NULL, NULL),
+('PF_DEPENDENCIA_ALC_TAB', 'Intervencion para personas con dependencia del alcohol y tabaco ', 8, 'ACT4', '4.2', NULL, NULL),
+('PF_REHAB_PSICOSOCIAL_ALC', 'Rehabilitación psicosocial de personas con trastornos del comportamiento debido al consumo del alcohol', 8, 'ACT4', '4.3', NULL, NULL),
+-- Actividad 5
+('PF_PSICOSIS', 'Tratamiento ambulatorio a personas con síndrome psicótico o trastorno del espectro de la esquizofrenia', 8, 'ACT5', '5.1', NULL, NULL),
+('PF_PRIMER_EPISODIO', 'Tratamiento ambulatorio de personas con primer episodio psicótico', 8, 'ACT5', '5.2', NULL, NULL),
+('PF_DETERIORO_COGNITIVO', 'Tratamiento ambulatorio para las personas con deterioro cognitivo', 8, 'ACT5', '5.3', NULL, NULL),
+('PF_CONTINUIDAD_CUIDADOS', 'Continuidad de cuidados a personas con trastorno mental grave', 8, 'ACT5', '5.5', NULL, NULL),
+-- Actividad 6
+('PF_REHAB_PSICOSOCIAL', 'Rehabilitación psicosocial', 8, 'ACT6', '6.1', NULL, NULL),
+('PF_REHAB_LABORAL', 'Rehabilitación laboral', 8, 'ACT6', '6.2', NULL, NULL)
+ON CONFLICT (id_paquete) DO UPDATE SET
+    nombre = EXCLUDED.nombre,
+    id_actividad = EXCLUDED.id_actividad,
+    codigo_paquete = EXCLUDED.codigo_paquete,
+    edad_minima = EXCLUDED.edad_minima,
+    edad_maxima = EXCLUDED.edad_maxima;
+
+-- =============================================================================
+-- 2. PAQUETE_GRUPO_DX
+-- =============================================================================
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_VIOLENCIA_FAMILIAR', 'T740'),
+    ('PF_VIOLENCIA_FAMILIAR', 'T741'),
+    ('PF_VIOLENCIA_FAMILIAR', 'T743'),
+    ('PF_VIOLENCIA_FAMILIAR', 'T748'),
+    ('PF_VIOLENCIA_FAMILIAR', 'T749'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y040'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y041'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y042'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y043'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y044'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y045'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y046'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y047'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y048'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y049'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y060'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y061'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y062'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y063'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y064'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y065'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y066'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y067'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y068'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y069'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y070'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y071'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y072'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y073'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y074'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y075'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y076'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y077'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y078'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y079'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y080'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y081'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y082'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y083'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y084'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y085'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y086'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y087'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y088'),
+    ('PF_VIOLENCIA_FAMILIAR', 'Y089')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_MALTRATO_NNA', 'T740'),
+    ('PF_MALTRATO_NNA', 'T741'),
+    ('PF_MALTRATO_NNA', 'T743'),
+    ('PF_MALTRATO_NNA', 'T748'),
+    ('PF_MALTRATO_NNA', 'T749'),
+    ('PF_MALTRATO_NNA', 'Y040'),
+    ('PF_MALTRATO_NNA', 'Y041'),
+    ('PF_MALTRATO_NNA', 'Y042'),
+    ('PF_MALTRATO_NNA', 'Y043'),
+    ('PF_MALTRATO_NNA', 'Y044'),
+    ('PF_MALTRATO_NNA', 'Y045'),
+    ('PF_MALTRATO_NNA', 'Y046'),
+    ('PF_MALTRATO_NNA', 'Y047'),
+    ('PF_MALTRATO_NNA', 'Y048'),
+    ('PF_MALTRATO_NNA', 'Y049'),
+    ('PF_MALTRATO_NNA', 'Y060'),
+    ('PF_MALTRATO_NNA', 'Y061'),
+    ('PF_MALTRATO_NNA', 'Y062'),
+    ('PF_MALTRATO_NNA', 'Y063'),
+    ('PF_MALTRATO_NNA', 'Y064'),
+    ('PF_MALTRATO_NNA', 'Y065'),
+    ('PF_MALTRATO_NNA', 'Y066'),
+    ('PF_MALTRATO_NNA', 'Y067'),
+    ('PF_MALTRATO_NNA', 'Y068'),
+    ('PF_MALTRATO_NNA', 'Y069'),
+    ('PF_MALTRATO_NNA', 'Y070'),
+    ('PF_MALTRATO_NNA', 'Y071'),
+    ('PF_MALTRATO_NNA', 'Y072'),
+    ('PF_MALTRATO_NNA', 'Y073'),
+    ('PF_MALTRATO_NNA', 'Y074'),
+    ('PF_MALTRATO_NNA', 'Y075'),
+    ('PF_MALTRATO_NNA', 'Y076'),
+    ('PF_MALTRATO_NNA', 'Y077'),
+    ('PF_MALTRATO_NNA', 'Y078'),
+    ('PF_MALTRATO_NNA', 'Y079'),
+    ('PF_MALTRATO_NNA', 'Y080'),
+    ('PF_MALTRATO_NNA', 'Y081'),
+    ('PF_MALTRATO_NNA', 'Y082'),
+    ('PF_MALTRATO_NNA', 'Y083'),
+    ('PF_MALTRATO_NNA', 'Y084'),
+    ('PF_MALTRATO_NNA', 'Y085'),
+    ('PF_MALTRATO_NNA', 'Y086'),
+    ('PF_MALTRATO_NNA', 'Y087'),
+    ('PF_MALTRATO_NNA', 'Y088'),
+    ('PF_MALTRATO_NNA', 'Y089')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_VIOLENCIA_SEXUAL', 'T742'),
+    ('PF_VIOLENCIA_SEXUAL', 'Y050'),
+    ('PF_VIOLENCIA_SEXUAL', 'Y051'),
+    ('PF_VIOLENCIA_SEXUAL', 'Y052'),
+    ('PF_VIOLENCIA_SEXUAL', 'Y053'),
+    ('PF_VIOLENCIA_SEXUAL', 'Y054'),
+    ('PF_VIOLENCIA_SEXUAL', 'Y055'),
+    ('PF_VIOLENCIA_SEXUAL', 'Y056'),
+    ('PF_VIOLENCIA_SEXUAL', 'Y057'),
+    ('PF_VIOLENCIA_SEXUAL', 'Y058'),
+    ('PF_VIOLENCIA_SEXUAL', 'Y059')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_VS_NNA', 'T742'),
+    ('PF_VS_NNA', 'Y050'),
+    ('PF_VS_NNA', 'Y051'),
+    ('PF_VS_NNA', 'Y052'),
+    ('PF_VS_NNA', 'Y053'),
+    ('PF_VS_NNA', 'Y054'),
+    ('PF_VS_NNA', 'Y055'),
+    ('PF_VS_NNA', 'Y056'),
+    ('PF_VS_NNA', 'Y057'),
+    ('PF_VS_NNA', 'Y058'),
+    ('PF_VS_NNA', 'Y059')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_AUTISMO', 'F840'),
+    ('PF_AUTISMO', 'F841'),
+    ('PF_AUTISMO', 'F845'),
+    ('PF_AUTISMO', 'F848'),
+    ('PF_AUTISMO', 'F849')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_TM_COMPORTAMIENTO', 'F500'),
+    ('PF_TM_COMPORTAMIENTO', 'F501'),
+    ('PF_TM_COMPORTAMIENTO', 'F502'),
+    ('PF_TM_COMPORTAMIENTO', 'F503'),
+    ('PF_TM_COMPORTAMIENTO', 'F504'),
+    ('PF_TM_COMPORTAMIENTO', 'F505'),
+    ('PF_TM_COMPORTAMIENTO', 'F506'),
+    ('PF_TM_COMPORTAMIENTO', 'F507'),
+    ('PF_TM_COMPORTAMIENTO', 'F508'),
+    ('PF_TM_COMPORTAMIENTO', 'F509'),
+    ('PF_TM_COMPORTAMIENTO', 'F510'),
+    ('PF_TM_COMPORTAMIENTO', 'F511'),
+    ('PF_TM_COMPORTAMIENTO', 'F512'),
+    ('PF_TM_COMPORTAMIENTO', 'F513'),
+    ('PF_TM_COMPORTAMIENTO', 'F514'),
+    ('PF_TM_COMPORTAMIENTO', 'F515'),
+    ('PF_TM_COMPORTAMIENTO', 'F516'),
+    ('PF_TM_COMPORTAMIENTO', 'F517'),
+    ('PF_TM_COMPORTAMIENTO', 'F518'),
+    ('PF_TM_COMPORTAMIENTO', 'F519'),
+    ('PF_TM_COMPORTAMIENTO', 'F520'),
+    ('PF_TM_COMPORTAMIENTO', 'F521'),
+    ('PF_TM_COMPORTAMIENTO', 'F522'),
+    ('PF_TM_COMPORTAMIENTO', 'F523'),
+    ('PF_TM_COMPORTAMIENTO', 'F524'),
+    ('PF_TM_COMPORTAMIENTO', 'F525'),
+    ('PF_TM_COMPORTAMIENTO', 'F526'),
+    ('PF_TM_COMPORTAMIENTO', 'F527'),
+    ('PF_TM_COMPORTAMIENTO', 'F528'),
+    ('PF_TM_COMPORTAMIENTO', 'F529'),
+    ('PF_TM_COMPORTAMIENTO', 'F530'),
+    ('PF_TM_COMPORTAMIENTO', 'F531'),
+    ('PF_TM_COMPORTAMIENTO', 'F532'),
+    ('PF_TM_COMPORTAMIENTO', 'F533'),
+    ('PF_TM_COMPORTAMIENTO', 'F534'),
+    ('PF_TM_COMPORTAMIENTO', 'F535'),
+    ('PF_TM_COMPORTAMIENTO', 'F536'),
+    ('PF_TM_COMPORTAMIENTO', 'F537'),
+    ('PF_TM_COMPORTAMIENTO', 'F538'),
+    ('PF_TM_COMPORTAMIENTO', 'F539'),
+    ('PF_TM_COMPORTAMIENTO', 'F540'),
+    ('PF_TM_COMPORTAMIENTO', 'F541'),
+    ('PF_TM_COMPORTAMIENTO', 'F542'),
+    ('PF_TM_COMPORTAMIENTO', 'F543'),
+    ('PF_TM_COMPORTAMIENTO', 'F544'),
+    ('PF_TM_COMPORTAMIENTO', 'F545'),
+    ('PF_TM_COMPORTAMIENTO', 'F546'),
+    ('PF_TM_COMPORTAMIENTO', 'F547'),
+    ('PF_TM_COMPORTAMIENTO', 'F548'),
+    ('PF_TM_COMPORTAMIENTO', 'F549'),
+    ('PF_TM_COMPORTAMIENTO', 'F550'),
+    ('PF_TM_COMPORTAMIENTO', 'F551'),
+    ('PF_TM_COMPORTAMIENTO', 'F552'),
+    ('PF_TM_COMPORTAMIENTO', 'F553'),
+    ('PF_TM_COMPORTAMIENTO', 'F554'),
+    ('PF_TM_COMPORTAMIENTO', 'F555'),
+    ('PF_TM_COMPORTAMIENTO', 'F556'),
+    ('PF_TM_COMPORTAMIENTO', 'F557'),
+    ('PF_TM_COMPORTAMIENTO', 'F558'),
+    ('PF_TM_COMPORTAMIENTO', 'F559'),
+    ('PF_TM_COMPORTAMIENTO', 'F560'),
+    ('PF_TM_COMPORTAMIENTO', 'F561'),
+    ('PF_TM_COMPORTAMIENTO', 'F562'),
+    ('PF_TM_COMPORTAMIENTO', 'F563'),
+    ('PF_TM_COMPORTAMIENTO', 'F564'),
+    ('PF_TM_COMPORTAMIENTO', 'F565'),
+    ('PF_TM_COMPORTAMIENTO', 'F566'),
+    ('PF_TM_COMPORTAMIENTO', 'F567'),
+    ('PF_TM_COMPORTAMIENTO', 'F568'),
+    ('PF_TM_COMPORTAMIENTO', 'F569'),
+    ('PF_TM_COMPORTAMIENTO', 'F570'),
+    ('PF_TM_COMPORTAMIENTO', 'F571'),
+    ('PF_TM_COMPORTAMIENTO', 'F572'),
+    ('PF_TM_COMPORTAMIENTO', 'F573'),
+    ('PF_TM_COMPORTAMIENTO', 'F574'),
+    ('PF_TM_COMPORTAMIENTO', 'F575'),
+    ('PF_TM_COMPORTAMIENTO', 'F576'),
+    ('PF_TM_COMPORTAMIENTO', 'F577'),
+    ('PF_TM_COMPORTAMIENTO', 'F578'),
+    ('PF_TM_COMPORTAMIENTO', 'F579'),
+    ('PF_TM_COMPORTAMIENTO', 'F580'),
+    ('PF_TM_COMPORTAMIENTO', 'F581'),
+    ('PF_TM_COMPORTAMIENTO', 'F582'),
+    ('PF_TM_COMPORTAMIENTO', 'F583'),
+    ('PF_TM_COMPORTAMIENTO', 'F584'),
+    ('PF_TM_COMPORTAMIENTO', 'F585'),
+    ('PF_TM_COMPORTAMIENTO', 'F586'),
+    ('PF_TM_COMPORTAMIENTO', 'F587'),
+    ('PF_TM_COMPORTAMIENTO', 'F588'),
+    ('PF_TM_COMPORTAMIENTO', 'F589'),
+    ('PF_TM_COMPORTAMIENTO', 'F590'),
+    ('PF_TM_COMPORTAMIENTO', 'F591'),
+    ('PF_TM_COMPORTAMIENTO', 'F592'),
+    ('PF_TM_COMPORTAMIENTO', 'F593'),
+    ('PF_TM_COMPORTAMIENTO', 'F594'),
+    ('PF_TM_COMPORTAMIENTO', 'F595'),
+    ('PF_TM_COMPORTAMIENTO', 'F596'),
+    ('PF_TM_COMPORTAMIENTO', 'F597'),
+    ('PF_TM_COMPORTAMIENTO', 'F598'),
+    ('PF_TM_COMPORTAMIENTO', 'F599'),
+    ('PF_TM_COMPORTAMIENTO', 'F800'),
+    ('PF_TM_COMPORTAMIENTO', 'F801'),
+    ('PF_TM_COMPORTAMIENTO', 'F802'),
+    ('PF_TM_COMPORTAMIENTO', 'F803'),
+    ('PF_TM_COMPORTAMIENTO', 'F804'),
+    ('PF_TM_COMPORTAMIENTO', 'F805'),
+    ('PF_TM_COMPORTAMIENTO', 'F806'),
+    ('PF_TM_COMPORTAMIENTO', 'F807'),
+    ('PF_TM_COMPORTAMIENTO', 'F808'),
+    ('PF_TM_COMPORTAMIENTO', 'F809'),
+    ('PF_TM_COMPORTAMIENTO', 'F810'),
+    ('PF_TM_COMPORTAMIENTO', 'F811'),
+    ('PF_TM_COMPORTAMIENTO', 'F812'),
+    ('PF_TM_COMPORTAMIENTO', 'F813'),
+    ('PF_TM_COMPORTAMIENTO', 'F814'),
+    ('PF_TM_COMPORTAMIENTO', 'F815'),
+    ('PF_TM_COMPORTAMIENTO', 'F816'),
+    ('PF_TM_COMPORTAMIENTO', 'F817'),
+    ('PF_TM_COMPORTAMIENTO', 'F818'),
+    ('PF_TM_COMPORTAMIENTO', 'F819'),
+    ('PF_TM_COMPORTAMIENTO', 'F820'),
+    ('PF_TM_COMPORTAMIENTO', 'F821'),
+    ('PF_TM_COMPORTAMIENTO', 'F822'),
+    ('PF_TM_COMPORTAMIENTO', 'F823'),
+    ('PF_TM_COMPORTAMIENTO', 'F824'),
+    ('PF_TM_COMPORTAMIENTO', 'F825'),
+    ('PF_TM_COMPORTAMIENTO', 'F826'),
+    ('PF_TM_COMPORTAMIENTO', 'F827'),
+    ('PF_TM_COMPORTAMIENTO', 'F828'),
+    ('PF_TM_COMPORTAMIENTO', 'F829'),
+    ('PF_TM_COMPORTAMIENTO', 'F830'),
+    ('PF_TM_COMPORTAMIENTO', 'F831'),
+    ('PF_TM_COMPORTAMIENTO', 'F832'),
+    ('PF_TM_COMPORTAMIENTO', 'F833'),
+    ('PF_TM_COMPORTAMIENTO', 'F900'),
+    ('PF_TM_COMPORTAMIENTO', 'F901'),
+    ('PF_TM_COMPORTAMIENTO', 'F902'),
+    ('PF_TM_COMPORTAMIENTO', 'F903'),
+    ('PF_TM_COMPORTAMIENTO', 'F904'),
+    ('PF_TM_COMPORTAMIENTO', 'F905'),
+    ('PF_TM_COMPORTAMIENTO', 'F906'),
+    ('PF_TM_COMPORTAMIENTO', 'F907'),
+    ('PF_TM_COMPORTAMIENTO', 'F908'),
+    ('PF_TM_COMPORTAMIENTO', 'F909'),
+    ('PF_TM_COMPORTAMIENTO', 'F910'),
+    ('PF_TM_COMPORTAMIENTO', 'F911'),
+    ('PF_TM_COMPORTAMIENTO', 'F912'),
+    ('PF_TM_COMPORTAMIENTO', 'F913'),
+    ('PF_TM_COMPORTAMIENTO', 'F914'),
+    ('PF_TM_COMPORTAMIENTO', 'F915'),
+    ('PF_TM_COMPORTAMIENTO', 'F916'),
+    ('PF_TM_COMPORTAMIENTO', 'F917'),
+    ('PF_TM_COMPORTAMIENTO', 'F918'),
+    ('PF_TM_COMPORTAMIENTO', 'F919'),
+    ('PF_TM_COMPORTAMIENTO', 'F920'),
+    ('PF_TM_COMPORTAMIENTO', 'F921'),
+    ('PF_TM_COMPORTAMIENTO', 'F922'),
+    ('PF_TM_COMPORTAMIENTO', 'F923'),
+    ('PF_TM_COMPORTAMIENTO', 'F924'),
+    ('PF_TM_COMPORTAMIENTO', 'F925'),
+    ('PF_TM_COMPORTAMIENTO', 'F926'),
+    ('PF_TM_COMPORTAMIENTO', 'F927'),
+    ('PF_TM_COMPORTAMIENTO', 'F928'),
+    ('PF_TM_COMPORTAMIENTO', 'F929'),
+    ('PF_TM_COMPORTAMIENTO', 'F930'),
+    ('PF_TM_COMPORTAMIENTO', 'F931'),
+    ('PF_TM_COMPORTAMIENTO', 'F932'),
+    ('PF_TM_COMPORTAMIENTO', 'F933'),
+    ('PF_TM_COMPORTAMIENTO', 'F934'),
+    ('PF_TM_COMPORTAMIENTO', 'F935'),
+    ('PF_TM_COMPORTAMIENTO', 'F936'),
+    ('PF_TM_COMPORTAMIENTO', 'F937'),
+    ('PF_TM_COMPORTAMIENTO', 'F938'),
+    ('PF_TM_COMPORTAMIENTO', 'F939'),
+    ('PF_TM_COMPORTAMIENTO', 'F940'),
+    ('PF_TM_COMPORTAMIENTO', 'F941'),
+    ('PF_TM_COMPORTAMIENTO', 'F942'),
+    ('PF_TM_COMPORTAMIENTO', 'F943'),
+    ('PF_TM_COMPORTAMIENTO', 'F944'),
+    ('PF_TM_COMPORTAMIENTO', 'F945'),
+    ('PF_TM_COMPORTAMIENTO', 'F946'),
+    ('PF_TM_COMPORTAMIENTO', 'F947'),
+    ('PF_TM_COMPORTAMIENTO', 'F948'),
+    ('PF_TM_COMPORTAMIENTO', 'F949'),
+    ('PF_TM_COMPORTAMIENTO', 'F950'),
+    ('PF_TM_COMPORTAMIENTO', 'F951'),
+    ('PF_TM_COMPORTAMIENTO', 'F952'),
+    ('PF_TM_COMPORTAMIENTO', 'F953'),
+    ('PF_TM_COMPORTAMIENTO', 'F954'),
+    ('PF_TM_COMPORTAMIENTO', 'F955'),
+    ('PF_TM_COMPORTAMIENTO', 'F956'),
+    ('PF_TM_COMPORTAMIENTO', 'F957'),
+    ('PF_TM_COMPORTAMIENTO', 'F958'),
+    ('PF_TM_COMPORTAMIENTO', 'F959'),
+    ('PF_TM_COMPORTAMIENTO', 'F960'),
+    ('PF_TM_COMPORTAMIENTO', 'F961'),
+    ('PF_TM_COMPORTAMIENTO', 'F962'),
+    ('PF_TM_COMPORTAMIENTO', 'F963'),
+    ('PF_TM_COMPORTAMIENTO', 'F964'),
+    ('PF_TM_COMPORTAMIENTO', 'F965'),
+    ('PF_TM_COMPORTAMIENTO', 'F966'),
+    ('PF_TM_COMPORTAMIENTO', 'F967'),
+    ('PF_TM_COMPORTAMIENTO', 'F968'),
+    ('PF_TM_COMPORTAMIENTO', 'F969'),
+    ('PF_TM_COMPORTAMIENTO', 'F970'),
+    ('PF_TM_COMPORTAMIENTO', 'F971'),
+    ('PF_TM_COMPORTAMIENTO', 'F972'),
+    ('PF_TM_COMPORTAMIENTO', 'F973'),
+    ('PF_TM_COMPORTAMIENTO', 'F974'),
+    ('PF_TM_COMPORTAMIENTO', 'F975'),
+    ('PF_TM_COMPORTAMIENTO', 'F976'),
+    ('PF_TM_COMPORTAMIENTO', 'F977'),
+    ('PF_TM_COMPORTAMIENTO', 'F978'),
+    ('PF_TM_COMPORTAMIENTO', 'F979'),
+    ('PF_TM_COMPORTAMIENTO', 'F980'),
+    ('PF_TM_COMPORTAMIENTO', 'F981'),
+    ('PF_TM_COMPORTAMIENTO', 'F982'),
+    ('PF_TM_COMPORTAMIENTO', 'F983'),
+    ('PF_TM_COMPORTAMIENTO', 'F984'),
+    ('PF_TM_COMPORTAMIENTO', 'F985'),
+    ('PF_TM_COMPORTAMIENTO', 'F986'),
+    ('PF_TM_COMPORTAMIENTO', 'F987'),
+    ('PF_TM_COMPORTAMIENTO', 'F988'),
+    ('PF_TM_COMPORTAMIENTO', 'F989')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_DEPRESION', 'F313'),
+    ('PF_DEPRESION', 'F314'),
+    ('PF_DEPRESION', 'F316'),
+    ('PF_DEPRESION', 'F320'),
+    ('PF_DEPRESION', 'F321'),
+    ('PF_DEPRESION', 'F322'),
+    ('PF_DEPRESION', 'F323'),
+    ('PF_DEPRESION', 'F324'),
+    ('PF_DEPRESION', 'F325'),
+    ('PF_DEPRESION', 'F326'),
+    ('PF_DEPRESION', 'F327'),
+    ('PF_DEPRESION', 'F328'),
+    ('PF_DEPRESION', 'F329'),
+    ('PF_DEPRESION', 'F330'),
+    ('PF_DEPRESION', 'F331'),
+    ('PF_DEPRESION', 'F332'),
+    ('PF_DEPRESION', 'F333'),
+    ('PF_DEPRESION', 'F334'),
+    ('PF_DEPRESION', 'F335'),
+    ('PF_DEPRESION', 'F336'),
+    ('PF_DEPRESION', 'F337'),
+    ('PF_DEPRESION', 'F338'),
+    ('PF_DEPRESION', 'F339'),
+    ('PF_DEPRESION', 'F340'),
+    ('PF_DEPRESION', 'F341'),
+    ('PF_DEPRESION', 'F342'),
+    ('PF_DEPRESION', 'F343'),
+    ('PF_DEPRESION', 'F344'),
+    ('PF_DEPRESION', 'F345'),
+    ('PF_DEPRESION', 'F346'),
+    ('PF_DEPRESION', 'F347'),
+    ('PF_DEPRESION', 'F348'),
+    ('PF_DEPRESION', 'F349'),
+    ('PF_DEPRESION', 'F380'),
+    ('PF_DEPRESION', 'F381'),
+    ('PF_DEPRESION', 'F382'),
+    ('PF_DEPRESION', 'F383'),
+    ('PF_DEPRESION', 'F384'),
+    ('PF_DEPRESION', 'F385'),
+    ('PF_DEPRESION', 'F386'),
+    ('PF_DEPRESION', 'F387'),
+    ('PF_DEPRESION', 'F388'),
+    ('PF_DEPRESION', 'F389'),
+    ('PF_DEPRESION', 'F390'),
+    ('PF_DEPRESION', 'F391'),
+    ('PF_DEPRESION', 'F392'),
+    ('PF_DEPRESION', 'F393'),
+    ('PF_DEPRESION', 'F394'),
+    ('PF_DEPRESION', 'F395'),
+    ('PF_DEPRESION', 'F396'),
+    ('PF_DEPRESION', 'F397'),
+    ('PF_DEPRESION', 'F398'),
+    ('PF_DEPRESION', 'F399')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_CONDUCTA_SUICIDA', 'X600'),
+    ('PF_CONDUCTA_SUICIDA', 'X601'),
+    ('PF_CONDUCTA_SUICIDA', 'X602'),
+    ('PF_CONDUCTA_SUICIDA', 'X603'),
+    ('PF_CONDUCTA_SUICIDA', 'X604'),
+    ('PF_CONDUCTA_SUICIDA', 'X605'),
+    ('PF_CONDUCTA_SUICIDA', 'X606'),
+    ('PF_CONDUCTA_SUICIDA', 'X607'),
+    ('PF_CONDUCTA_SUICIDA', 'X608'),
+    ('PF_CONDUCTA_SUICIDA', 'X609'),
+    ('PF_CONDUCTA_SUICIDA', 'X610'),
+    ('PF_CONDUCTA_SUICIDA', 'X611'),
+    ('PF_CONDUCTA_SUICIDA', 'X612'),
+    ('PF_CONDUCTA_SUICIDA', 'X613'),
+    ('PF_CONDUCTA_SUICIDA', 'X614'),
+    ('PF_CONDUCTA_SUICIDA', 'X615'),
+    ('PF_CONDUCTA_SUICIDA', 'X616'),
+    ('PF_CONDUCTA_SUICIDA', 'X617'),
+    ('PF_CONDUCTA_SUICIDA', 'X618'),
+    ('PF_CONDUCTA_SUICIDA', 'X619'),
+    ('PF_CONDUCTA_SUICIDA', 'X620'),
+    ('PF_CONDUCTA_SUICIDA', 'X621'),
+    ('PF_CONDUCTA_SUICIDA', 'X622'),
+    ('PF_CONDUCTA_SUICIDA', 'X623'),
+    ('PF_CONDUCTA_SUICIDA', 'X624'),
+    ('PF_CONDUCTA_SUICIDA', 'X625'),
+    ('PF_CONDUCTA_SUICIDA', 'X626'),
+    ('PF_CONDUCTA_SUICIDA', 'X627'),
+    ('PF_CONDUCTA_SUICIDA', 'X628'),
+    ('PF_CONDUCTA_SUICIDA', 'X629'),
+    ('PF_CONDUCTA_SUICIDA', 'X630'),
+    ('PF_CONDUCTA_SUICIDA', 'X631'),
+    ('PF_CONDUCTA_SUICIDA', 'X632'),
+    ('PF_CONDUCTA_SUICIDA', 'X633'),
+    ('PF_CONDUCTA_SUICIDA', 'X634'),
+    ('PF_CONDUCTA_SUICIDA', 'X635'),
+    ('PF_CONDUCTA_SUICIDA', 'X636'),
+    ('PF_CONDUCTA_SUICIDA', 'X637'),
+    ('PF_CONDUCTA_SUICIDA', 'X638'),
+    ('PF_CONDUCTA_SUICIDA', 'X639'),
+    ('PF_CONDUCTA_SUICIDA', 'X640'),
+    ('PF_CONDUCTA_SUICIDA', 'X641'),
+    ('PF_CONDUCTA_SUICIDA', 'X642'),
+    ('PF_CONDUCTA_SUICIDA', 'X643'),
+    ('PF_CONDUCTA_SUICIDA', 'X644'),
+    ('PF_CONDUCTA_SUICIDA', 'X645'),
+    ('PF_CONDUCTA_SUICIDA', 'X646'),
+    ('PF_CONDUCTA_SUICIDA', 'X647'),
+    ('PF_CONDUCTA_SUICIDA', 'X648'),
+    ('PF_CONDUCTA_SUICIDA', 'X649'),
+    ('PF_CONDUCTA_SUICIDA', 'X650'),
+    ('PF_CONDUCTA_SUICIDA', 'X651'),
+    ('PF_CONDUCTA_SUICIDA', 'X652'),
+    ('PF_CONDUCTA_SUICIDA', 'X653'),
+    ('PF_CONDUCTA_SUICIDA', 'X654'),
+    ('PF_CONDUCTA_SUICIDA', 'X655'),
+    ('PF_CONDUCTA_SUICIDA', 'X656'),
+    ('PF_CONDUCTA_SUICIDA', 'X657'),
+    ('PF_CONDUCTA_SUICIDA', 'X658'),
+    ('PF_CONDUCTA_SUICIDA', 'X659'),
+    ('PF_CONDUCTA_SUICIDA', 'X660'),
+    ('PF_CONDUCTA_SUICIDA', 'X661'),
+    ('PF_CONDUCTA_SUICIDA', 'X662'),
+    ('PF_CONDUCTA_SUICIDA', 'X663'),
+    ('PF_CONDUCTA_SUICIDA', 'X664'),
+    ('PF_CONDUCTA_SUICIDA', 'X665'),
+    ('PF_CONDUCTA_SUICIDA', 'X666'),
+    ('PF_CONDUCTA_SUICIDA', 'X667'),
+    ('PF_CONDUCTA_SUICIDA', 'X668'),
+    ('PF_CONDUCTA_SUICIDA', 'X669'),
+    ('PF_CONDUCTA_SUICIDA', 'X670'),
+    ('PF_CONDUCTA_SUICIDA', 'X671'),
+    ('PF_CONDUCTA_SUICIDA', 'X672'),
+    ('PF_CONDUCTA_SUICIDA', 'X673'),
+    ('PF_CONDUCTA_SUICIDA', 'X674'),
+    ('PF_CONDUCTA_SUICIDA', 'X675'),
+    ('PF_CONDUCTA_SUICIDA', 'X676'),
+    ('PF_CONDUCTA_SUICIDA', 'X677'),
+    ('PF_CONDUCTA_SUICIDA', 'X678'),
+    ('PF_CONDUCTA_SUICIDA', 'X679'),
+    ('PF_CONDUCTA_SUICIDA', 'X680'),
+    ('PF_CONDUCTA_SUICIDA', 'X681'),
+    ('PF_CONDUCTA_SUICIDA', 'X682'),
+    ('PF_CONDUCTA_SUICIDA', 'X683'),
+    ('PF_CONDUCTA_SUICIDA', 'X684'),
+    ('PF_CONDUCTA_SUICIDA', 'X685'),
+    ('PF_CONDUCTA_SUICIDA', 'X686'),
+    ('PF_CONDUCTA_SUICIDA', 'X687'),
+    ('PF_CONDUCTA_SUICIDA', 'X688'),
+    ('PF_CONDUCTA_SUICIDA', 'X689'),
+    ('PF_CONDUCTA_SUICIDA', 'X690'),
+    ('PF_CONDUCTA_SUICIDA', 'X691'),
+    ('PF_CONDUCTA_SUICIDA', 'X692'),
+    ('PF_CONDUCTA_SUICIDA', 'X693'),
+    ('PF_CONDUCTA_SUICIDA', 'X694'),
+    ('PF_CONDUCTA_SUICIDA', 'X695'),
+    ('PF_CONDUCTA_SUICIDA', 'X696'),
+    ('PF_CONDUCTA_SUICIDA', 'X697'),
+    ('PF_CONDUCTA_SUICIDA', 'X698'),
+    ('PF_CONDUCTA_SUICIDA', 'X699'),
+    ('PF_CONDUCTA_SUICIDA', 'X700'),
+    ('PF_CONDUCTA_SUICIDA', 'X701'),
+    ('PF_CONDUCTA_SUICIDA', 'X702'),
+    ('PF_CONDUCTA_SUICIDA', 'X703'),
+    ('PF_CONDUCTA_SUICIDA', 'X704'),
+    ('PF_CONDUCTA_SUICIDA', 'X705'),
+    ('PF_CONDUCTA_SUICIDA', 'X706'),
+    ('PF_CONDUCTA_SUICIDA', 'X707'),
+    ('PF_CONDUCTA_SUICIDA', 'X708'),
+    ('PF_CONDUCTA_SUICIDA', 'X709'),
+    ('PF_CONDUCTA_SUICIDA', 'X710'),
+    ('PF_CONDUCTA_SUICIDA', 'X711'),
+    ('PF_CONDUCTA_SUICIDA', 'X712'),
+    ('PF_CONDUCTA_SUICIDA', 'X713'),
+    ('PF_CONDUCTA_SUICIDA', 'X714'),
+    ('PF_CONDUCTA_SUICIDA', 'X715'),
+    ('PF_CONDUCTA_SUICIDA', 'X716'),
+    ('PF_CONDUCTA_SUICIDA', 'X717'),
+    ('PF_CONDUCTA_SUICIDA', 'X718'),
+    ('PF_CONDUCTA_SUICIDA', 'X719'),
+    ('PF_CONDUCTA_SUICIDA', 'X720'),
+    ('PF_CONDUCTA_SUICIDA', 'X721'),
+    ('PF_CONDUCTA_SUICIDA', 'X722'),
+    ('PF_CONDUCTA_SUICIDA', 'X723'),
+    ('PF_CONDUCTA_SUICIDA', 'X724'),
+    ('PF_CONDUCTA_SUICIDA', 'X725'),
+    ('PF_CONDUCTA_SUICIDA', 'X726'),
+    ('PF_CONDUCTA_SUICIDA', 'X727'),
+    ('PF_CONDUCTA_SUICIDA', 'X728'),
+    ('PF_CONDUCTA_SUICIDA', 'X729'),
+    ('PF_CONDUCTA_SUICIDA', 'X730'),
+    ('PF_CONDUCTA_SUICIDA', 'X731'),
+    ('PF_CONDUCTA_SUICIDA', 'X732'),
+    ('PF_CONDUCTA_SUICIDA', 'X733'),
+    ('PF_CONDUCTA_SUICIDA', 'X734'),
+    ('PF_CONDUCTA_SUICIDA', 'X735'),
+    ('PF_CONDUCTA_SUICIDA', 'X736'),
+    ('PF_CONDUCTA_SUICIDA', 'X737'),
+    ('PF_CONDUCTA_SUICIDA', 'X738'),
+    ('PF_CONDUCTA_SUICIDA', 'X739'),
+    ('PF_CONDUCTA_SUICIDA', 'X740'),
+    ('PF_CONDUCTA_SUICIDA', 'X741'),
+    ('PF_CONDUCTA_SUICIDA', 'X742'),
+    ('PF_CONDUCTA_SUICIDA', 'X743'),
+    ('PF_CONDUCTA_SUICIDA', 'X744'),
+    ('PF_CONDUCTA_SUICIDA', 'X745'),
+    ('PF_CONDUCTA_SUICIDA', 'X746'),
+    ('PF_CONDUCTA_SUICIDA', 'X747'),
+    ('PF_CONDUCTA_SUICIDA', 'X748'),
+    ('PF_CONDUCTA_SUICIDA', 'X749'),
+    ('PF_CONDUCTA_SUICIDA', 'X750'),
+    ('PF_CONDUCTA_SUICIDA', 'X751'),
+    ('PF_CONDUCTA_SUICIDA', 'X752'),
+    ('PF_CONDUCTA_SUICIDA', 'X753'),
+    ('PF_CONDUCTA_SUICIDA', 'X754'),
+    ('PF_CONDUCTA_SUICIDA', 'X755'),
+    ('PF_CONDUCTA_SUICIDA', 'X756'),
+    ('PF_CONDUCTA_SUICIDA', 'X757'),
+    ('PF_CONDUCTA_SUICIDA', 'X758'),
+    ('PF_CONDUCTA_SUICIDA', 'X759'),
+    ('PF_CONDUCTA_SUICIDA', 'X760'),
+    ('PF_CONDUCTA_SUICIDA', 'X761'),
+    ('PF_CONDUCTA_SUICIDA', 'X762'),
+    ('PF_CONDUCTA_SUICIDA', 'X763'),
+    ('PF_CONDUCTA_SUICIDA', 'X764'),
+    ('PF_CONDUCTA_SUICIDA', 'X765'),
+    ('PF_CONDUCTA_SUICIDA', 'X766'),
+    ('PF_CONDUCTA_SUICIDA', 'X767'),
+    ('PF_CONDUCTA_SUICIDA', 'X768'),
+    ('PF_CONDUCTA_SUICIDA', 'X769'),
+    ('PF_CONDUCTA_SUICIDA', 'X770'),
+    ('PF_CONDUCTA_SUICIDA', 'X771'),
+    ('PF_CONDUCTA_SUICIDA', 'X772'),
+    ('PF_CONDUCTA_SUICIDA', 'X773'),
+    ('PF_CONDUCTA_SUICIDA', 'X774'),
+    ('PF_CONDUCTA_SUICIDA', 'X775'),
+    ('PF_CONDUCTA_SUICIDA', 'X776'),
+    ('PF_CONDUCTA_SUICIDA', 'X777'),
+    ('PF_CONDUCTA_SUICIDA', 'X778'),
+    ('PF_CONDUCTA_SUICIDA', 'X779'),
+    ('PF_CONDUCTA_SUICIDA', 'X780'),
+    ('PF_CONDUCTA_SUICIDA', 'X781'),
+    ('PF_CONDUCTA_SUICIDA', 'X782'),
+    ('PF_CONDUCTA_SUICIDA', 'X783'),
+    ('PF_CONDUCTA_SUICIDA', 'X784'),
+    ('PF_CONDUCTA_SUICIDA', 'X785'),
+    ('PF_CONDUCTA_SUICIDA', 'X786'),
+    ('PF_CONDUCTA_SUICIDA', 'X787'),
+    ('PF_CONDUCTA_SUICIDA', 'X788'),
+    ('PF_CONDUCTA_SUICIDA', 'X789'),
+    ('PF_CONDUCTA_SUICIDA', 'X790'),
+    ('PF_CONDUCTA_SUICIDA', 'X791'),
+    ('PF_CONDUCTA_SUICIDA', 'X792'),
+    ('PF_CONDUCTA_SUICIDA', 'X793'),
+    ('PF_CONDUCTA_SUICIDA', 'X794'),
+    ('PF_CONDUCTA_SUICIDA', 'X795'),
+    ('PF_CONDUCTA_SUICIDA', 'X796'),
+    ('PF_CONDUCTA_SUICIDA', 'X797'),
+    ('PF_CONDUCTA_SUICIDA', 'X798'),
+    ('PF_CONDUCTA_SUICIDA', 'X799'),
+    ('PF_CONDUCTA_SUICIDA', 'X800'),
+    ('PF_CONDUCTA_SUICIDA', 'X801'),
+    ('PF_CONDUCTA_SUICIDA', 'X802'),
+    ('PF_CONDUCTA_SUICIDA', 'X803'),
+    ('PF_CONDUCTA_SUICIDA', 'X804'),
+    ('PF_CONDUCTA_SUICIDA', 'X805'),
+    ('PF_CONDUCTA_SUICIDA', 'X806'),
+    ('PF_CONDUCTA_SUICIDA', 'X807'),
+    ('PF_CONDUCTA_SUICIDA', 'X808'),
+    ('PF_CONDUCTA_SUICIDA', 'X809'),
+    ('PF_CONDUCTA_SUICIDA', 'X810'),
+    ('PF_CONDUCTA_SUICIDA', 'X811'),
+    ('PF_CONDUCTA_SUICIDA', 'X812'),
+    ('PF_CONDUCTA_SUICIDA', 'X813'),
+    ('PF_CONDUCTA_SUICIDA', 'X814'),
+    ('PF_CONDUCTA_SUICIDA', 'X815'),
+    ('PF_CONDUCTA_SUICIDA', 'X816'),
+    ('PF_CONDUCTA_SUICIDA', 'X817'),
+    ('PF_CONDUCTA_SUICIDA', 'X818'),
+    ('PF_CONDUCTA_SUICIDA', 'X819'),
+    ('PF_CONDUCTA_SUICIDA', 'X820'),
+    ('PF_CONDUCTA_SUICIDA', 'X821'),
+    ('PF_CONDUCTA_SUICIDA', 'X822'),
+    ('PF_CONDUCTA_SUICIDA', 'X823'),
+    ('PF_CONDUCTA_SUICIDA', 'X824'),
+    ('PF_CONDUCTA_SUICIDA', 'X825'),
+    ('PF_CONDUCTA_SUICIDA', 'X826'),
+    ('PF_CONDUCTA_SUICIDA', 'X827'),
+    ('PF_CONDUCTA_SUICIDA', 'X828'),
+    ('PF_CONDUCTA_SUICIDA', 'X829'),
+    ('PF_CONDUCTA_SUICIDA', 'X830'),
+    ('PF_CONDUCTA_SUICIDA', 'X831'),
+    ('PF_CONDUCTA_SUICIDA', 'X832'),
+    ('PF_CONDUCTA_SUICIDA', 'X833'),
+    ('PF_CONDUCTA_SUICIDA', 'X834'),
+    ('PF_CONDUCTA_SUICIDA', 'X835'),
+    ('PF_CONDUCTA_SUICIDA', 'X836'),
+    ('PF_CONDUCTA_SUICIDA', 'X837'),
+    ('PF_CONDUCTA_SUICIDA', 'X838'),
+    ('PF_CONDUCTA_SUICIDA', 'X839'),
+    ('PF_CONDUCTA_SUICIDA', 'X840'),
+    ('PF_CONDUCTA_SUICIDA', 'X841'),
+    ('PF_CONDUCTA_SUICIDA', 'X842'),
+    ('PF_CONDUCTA_SUICIDA', 'X843'),
+    ('PF_CONDUCTA_SUICIDA', 'X844'),
+    ('PF_CONDUCTA_SUICIDA', 'X845'),
+    ('PF_CONDUCTA_SUICIDA', 'X846'),
+    ('PF_CONDUCTA_SUICIDA', 'X847'),
+    ('PF_CONDUCTA_SUICIDA', 'X848'),
+    ('PF_CONDUCTA_SUICIDA', 'X849')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_ANSIEDAD', 'F400'),
+    ('PF_ANSIEDAD', 'F401'),
+    ('PF_ANSIEDAD', 'F402'),
+    ('PF_ANSIEDAD', 'F403'),
+    ('PF_ANSIEDAD', 'F404'),
+    ('PF_ANSIEDAD', 'F405'),
+    ('PF_ANSIEDAD', 'F406'),
+    ('PF_ANSIEDAD', 'F407'),
+    ('PF_ANSIEDAD', 'F408'),
+    ('PF_ANSIEDAD', 'F409'),
+    ('PF_ANSIEDAD', 'F410'),
+    ('PF_ANSIEDAD', 'F411'),
+    ('PF_ANSIEDAD', 'F412'),
+    ('PF_ANSIEDAD', 'F413'),
+    ('PF_ANSIEDAD', 'F414'),
+    ('PF_ANSIEDAD', 'F415'),
+    ('PF_ANSIEDAD', 'F416'),
+    ('PF_ANSIEDAD', 'F417'),
+    ('PF_ANSIEDAD', 'F418'),
+    ('PF_ANSIEDAD', 'F419'),
+    ('PF_ANSIEDAD', 'F420'),
+    ('PF_ANSIEDAD', 'F421'),
+    ('PF_ANSIEDAD', 'F422'),
+    ('PF_ANSIEDAD', 'F423'),
+    ('PF_ANSIEDAD', 'F424'),
+    ('PF_ANSIEDAD', 'F425'),
+    ('PF_ANSIEDAD', 'F426'),
+    ('PF_ANSIEDAD', 'F427'),
+    ('PF_ANSIEDAD', 'F428'),
+    ('PF_ANSIEDAD', 'F429'),
+    ('PF_ANSIEDAD', 'F430'),
+    ('PF_ANSIEDAD', 'F431'),
+    ('PF_ANSIEDAD', 'F432'),
+    ('PF_ANSIEDAD', 'F433'),
+    ('PF_ANSIEDAD', 'F434'),
+    ('PF_ANSIEDAD', 'F435'),
+    ('PF_ANSIEDAD', 'F436'),
+    ('PF_ANSIEDAD', 'F437'),
+    ('PF_ANSIEDAD', 'F438'),
+    ('PF_ANSIEDAD', 'F439'),
+    ('PF_ANSIEDAD', 'F440'),
+    ('PF_ANSIEDAD', 'F441'),
+    ('PF_ANSIEDAD', 'F442'),
+    ('PF_ANSIEDAD', 'F443'),
+    ('PF_ANSIEDAD', 'F444'),
+    ('PF_ANSIEDAD', 'F445'),
+    ('PF_ANSIEDAD', 'F446'),
+    ('PF_ANSIEDAD', 'F447'),
+    ('PF_ANSIEDAD', 'F448'),
+    ('PF_ANSIEDAD', 'F449'),
+    ('PF_ANSIEDAD', 'F450'),
+    ('PF_ANSIEDAD', 'F451'),
+    ('PF_ANSIEDAD', 'F452'),
+    ('PF_ANSIEDAD', 'F453'),
+    ('PF_ANSIEDAD', 'F454'),
+    ('PF_ANSIEDAD', 'F455'),
+    ('PF_ANSIEDAD', 'F456'),
+    ('PF_ANSIEDAD', 'F457'),
+    ('PF_ANSIEDAD', 'F458'),
+    ('PF_ANSIEDAD', 'F459'),
+    ('PF_ANSIEDAD', 'F460'),
+    ('PF_ANSIEDAD', 'F461'),
+    ('PF_ANSIEDAD', 'F462'),
+    ('PF_ANSIEDAD', 'F463'),
+    ('PF_ANSIEDAD', 'F464'),
+    ('PF_ANSIEDAD', 'F465'),
+    ('PF_ANSIEDAD', 'F466'),
+    ('PF_ANSIEDAD', 'F467'),
+    ('PF_ANSIEDAD', 'F468'),
+    ('PF_ANSIEDAD', 'F469'),
+    ('PF_ANSIEDAD', 'F470'),
+    ('PF_ANSIEDAD', 'F471'),
+    ('PF_ANSIEDAD', 'F472'),
+    ('PF_ANSIEDAD', 'F473'),
+    ('PF_ANSIEDAD', 'F474'),
+    ('PF_ANSIEDAD', 'F475'),
+    ('PF_ANSIEDAD', 'F476'),
+    ('PF_ANSIEDAD', 'F477'),
+    ('PF_ANSIEDAD', 'F478'),
+    ('PF_ANSIEDAD', 'F479'),
+    ('PF_ANSIEDAD', 'F480'),
+    ('PF_ANSIEDAD', 'F481'),
+    ('PF_ANSIEDAD', 'F482'),
+    ('PF_ANSIEDAD', 'F483'),
+    ('PF_ANSIEDAD', 'F484'),
+    ('PF_ANSIEDAD', 'F485'),
+    ('PF_ANSIEDAD', 'F486'),
+    ('PF_ANSIEDAD', 'F487'),
+    ('PF_ANSIEDAD', 'F488'),
+    ('PF_ANSIEDAD', 'F489')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_CONSUMO_PERJUDICIAL', 'F101'),
+    ('PF_CONSUMO_PERJUDICIAL', 'F171')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_DEPENDENCIA_ALC_TAB', 'F102'),
+    ('PF_DEPENDENCIA_ALC_TAB', 'F172')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_REHAB_PSICOSOCIAL_ALC', 'F102'),
+    ('PF_REHAB_PSICOSOCIAL_ALC', 'Z502')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_PSICOSIS', 'F200'),
+    ('PF_PSICOSIS', 'F201'),
+    ('PF_PSICOSIS', 'F202'),
+    ('PF_PSICOSIS', 'F203'),
+    ('PF_PSICOSIS', 'F204'),
+    ('PF_PSICOSIS', 'F205'),
+    ('PF_PSICOSIS', 'F206'),
+    ('PF_PSICOSIS', 'F207'),
+    ('PF_PSICOSIS', 'F208'),
+    ('PF_PSICOSIS', 'F209'),
+    ('PF_PSICOSIS', 'F210'),
+    ('PF_PSICOSIS', 'F211'),
+    ('PF_PSICOSIS', 'F212'),
+    ('PF_PSICOSIS', 'F213'),
+    ('PF_PSICOSIS', 'F214'),
+    ('PF_PSICOSIS', 'F215'),
+    ('PF_PSICOSIS', 'F216'),
+    ('PF_PSICOSIS', 'F217'),
+    ('PF_PSICOSIS', 'F218'),
+    ('PF_PSICOSIS', 'F219'),
+    ('PF_PSICOSIS', 'F220'),
+    ('PF_PSICOSIS', 'F221'),
+    ('PF_PSICOSIS', 'F222'),
+    ('PF_PSICOSIS', 'F223'),
+    ('PF_PSICOSIS', 'F224'),
+    ('PF_PSICOSIS', 'F225'),
+    ('PF_PSICOSIS', 'F226'),
+    ('PF_PSICOSIS', 'F227'),
+    ('PF_PSICOSIS', 'F228'),
+    ('PF_PSICOSIS', 'F229'),
+    ('PF_PSICOSIS', 'F230'),
+    ('PF_PSICOSIS', 'F231'),
+    ('PF_PSICOSIS', 'F232'),
+    ('PF_PSICOSIS', 'F233'),
+    ('PF_PSICOSIS', 'F234'),
+    ('PF_PSICOSIS', 'F235'),
+    ('PF_PSICOSIS', 'F236'),
+    ('PF_PSICOSIS', 'F237'),
+    ('PF_PSICOSIS', 'F238'),
+    ('PF_PSICOSIS', 'F239'),
+    ('PF_PSICOSIS', 'F240'),
+    ('PF_PSICOSIS', 'F241'),
+    ('PF_PSICOSIS', 'F242'),
+    ('PF_PSICOSIS', 'F243'),
+    ('PF_PSICOSIS', 'F244'),
+    ('PF_PSICOSIS', 'F245'),
+    ('PF_PSICOSIS', 'F246'),
+    ('PF_PSICOSIS', 'F247'),
+    ('PF_PSICOSIS', 'F248'),
+    ('PF_PSICOSIS', 'F249'),
+    ('PF_PSICOSIS', 'F250'),
+    ('PF_PSICOSIS', 'F251'),
+    ('PF_PSICOSIS', 'F252'),
+    ('PF_PSICOSIS', 'F253'),
+    ('PF_PSICOSIS', 'F254'),
+    ('PF_PSICOSIS', 'F255'),
+    ('PF_PSICOSIS', 'F256'),
+    ('PF_PSICOSIS', 'F257'),
+    ('PF_PSICOSIS', 'F258'),
+    ('PF_PSICOSIS', 'F259'),
+    ('PF_PSICOSIS', 'F280'),
+    ('PF_PSICOSIS', 'F281'),
+    ('PF_PSICOSIS', 'F282'),
+    ('PF_PSICOSIS', 'F283'),
+    ('PF_PSICOSIS', 'F284'),
+    ('PF_PSICOSIS', 'F285'),
+    ('PF_PSICOSIS', 'F286'),
+    ('PF_PSICOSIS', 'F287'),
+    ('PF_PSICOSIS', 'F288'),
+    ('PF_PSICOSIS', 'F289'),
+    ('PF_PSICOSIS', 'F290'),
+    ('PF_PSICOSIS', 'F291'),
+    ('PF_PSICOSIS', 'F292'),
+    ('PF_PSICOSIS', 'F293'),
+    ('PF_PSICOSIS', 'F294'),
+    ('PF_PSICOSIS', 'F295'),
+    ('PF_PSICOSIS', 'F296'),
+    ('PF_PSICOSIS', 'F297'),
+    ('PF_PSICOSIS', 'F298'),
+    ('PF_PSICOSIS', 'F299'),
+    ('PF_PSICOSIS', 'F312'),
+    ('PF_PSICOSIS', 'F315'),
+    ('PF_PSICOSIS', 'F323'),
+    ('PF_PSICOSIS', 'F333'),
+    ('PF_PSICOSIS', 'F531'),
+    ('PF_PSICOSIS', 'F105'),
+    ('PF_PSICOSIS', 'F115'),
+    ('PF_PSICOSIS', 'F125'),
+    ('PF_PSICOSIS', 'F135'),
+    ('PF_PSICOSIS', 'F145'),
+    ('PF_PSICOSIS', 'F155'),
+    ('PF_PSICOSIS', 'F165'),
+    ('PF_PSICOSIS', 'F175'),
+    ('PF_PSICOSIS', 'F185'),
+    ('PF_PSICOSIS', 'F195')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_PRIMER_EPISODIO', 'F060'),
+    ('PF_PRIMER_EPISODIO', 'F061'),
+    ('PF_PRIMER_EPISODIO', 'F062'),
+    ('PF_PRIMER_EPISODIO', 'F200'),
+    ('PF_PRIMER_EPISODIO', 'F201'),
+    ('PF_PRIMER_EPISODIO', 'F202'),
+    ('PF_PRIMER_EPISODIO', 'F203'),
+    ('PF_PRIMER_EPISODIO', 'F204'),
+    ('PF_PRIMER_EPISODIO', 'F205'),
+    ('PF_PRIMER_EPISODIO', 'F206'),
+    ('PF_PRIMER_EPISODIO', 'F207'),
+    ('PF_PRIMER_EPISODIO', 'F208'),
+    ('PF_PRIMER_EPISODIO', 'F209'),
+    ('PF_PRIMER_EPISODIO', 'F210'),
+    ('PF_PRIMER_EPISODIO', 'F211'),
+    ('PF_PRIMER_EPISODIO', 'F212'),
+    ('PF_PRIMER_EPISODIO', 'F213'),
+    ('PF_PRIMER_EPISODIO', 'F214'),
+    ('PF_PRIMER_EPISODIO', 'F215'),
+    ('PF_PRIMER_EPISODIO', 'F216'),
+    ('PF_PRIMER_EPISODIO', 'F217'),
+    ('PF_PRIMER_EPISODIO', 'F218'),
+    ('PF_PRIMER_EPISODIO', 'F219'),
+    ('PF_PRIMER_EPISODIO', 'F220'),
+    ('PF_PRIMER_EPISODIO', 'F221'),
+    ('PF_PRIMER_EPISODIO', 'F222'),
+    ('PF_PRIMER_EPISODIO', 'F223'),
+    ('PF_PRIMER_EPISODIO', 'F224'),
+    ('PF_PRIMER_EPISODIO', 'F225'),
+    ('PF_PRIMER_EPISODIO', 'F226'),
+    ('PF_PRIMER_EPISODIO', 'F227'),
+    ('PF_PRIMER_EPISODIO', 'F228'),
+    ('PF_PRIMER_EPISODIO', 'F229'),
+    ('PF_PRIMER_EPISODIO', 'F230'),
+    ('PF_PRIMER_EPISODIO', 'F231'),
+    ('PF_PRIMER_EPISODIO', 'F232'),
+    ('PF_PRIMER_EPISODIO', 'F233'),
+    ('PF_PRIMER_EPISODIO', 'F234'),
+    ('PF_PRIMER_EPISODIO', 'F235'),
+    ('PF_PRIMER_EPISODIO', 'F236'),
+    ('PF_PRIMER_EPISODIO', 'F237'),
+    ('PF_PRIMER_EPISODIO', 'F238'),
+    ('PF_PRIMER_EPISODIO', 'F239'),
+    ('PF_PRIMER_EPISODIO', 'F240'),
+    ('PF_PRIMER_EPISODIO', 'F241'),
+    ('PF_PRIMER_EPISODIO', 'F242'),
+    ('PF_PRIMER_EPISODIO', 'F243'),
+    ('PF_PRIMER_EPISODIO', 'F244'),
+    ('PF_PRIMER_EPISODIO', 'F245'),
+    ('PF_PRIMER_EPISODIO', 'F246'),
+    ('PF_PRIMER_EPISODIO', 'F247'),
+    ('PF_PRIMER_EPISODIO', 'F248'),
+    ('PF_PRIMER_EPISODIO', 'F249'),
+    ('PF_PRIMER_EPISODIO', 'F250'),
+    ('PF_PRIMER_EPISODIO', 'F251'),
+    ('PF_PRIMER_EPISODIO', 'F252'),
+    ('PF_PRIMER_EPISODIO', 'F253'),
+    ('PF_PRIMER_EPISODIO', 'F254'),
+    ('PF_PRIMER_EPISODIO', 'F255'),
+    ('PF_PRIMER_EPISODIO', 'F256'),
+    ('PF_PRIMER_EPISODIO', 'F257'),
+    ('PF_PRIMER_EPISODIO', 'F258'),
+    ('PF_PRIMER_EPISODIO', 'F259'),
+    ('PF_PRIMER_EPISODIO', 'F280'),
+    ('PF_PRIMER_EPISODIO', 'F281'),
+    ('PF_PRIMER_EPISODIO', 'F282'),
+    ('PF_PRIMER_EPISODIO', 'F283'),
+    ('PF_PRIMER_EPISODIO', 'F284'),
+    ('PF_PRIMER_EPISODIO', 'F285'),
+    ('PF_PRIMER_EPISODIO', 'F286'),
+    ('PF_PRIMER_EPISODIO', 'F287'),
+    ('PF_PRIMER_EPISODIO', 'F288'),
+    ('PF_PRIMER_EPISODIO', 'F289'),
+    ('PF_PRIMER_EPISODIO', 'F290'),
+    ('PF_PRIMER_EPISODIO', 'F291'),
+    ('PF_PRIMER_EPISODIO', 'F292'),
+    ('PF_PRIMER_EPISODIO', 'F293'),
+    ('PF_PRIMER_EPISODIO', 'F294'),
+    ('PF_PRIMER_EPISODIO', 'F295'),
+    ('PF_PRIMER_EPISODIO', 'F296'),
+    ('PF_PRIMER_EPISODIO', 'F297'),
+    ('PF_PRIMER_EPISODIO', 'F298'),
+    ('PF_PRIMER_EPISODIO', 'F299'),
+    ('PF_PRIMER_EPISODIO', 'F312'),
+    ('PF_PRIMER_EPISODIO', 'F315'),
+    ('PF_PRIMER_EPISODIO', 'F531'),
+    ('PF_PRIMER_EPISODIO', 'F105'),
+    ('PF_PRIMER_EPISODIO', 'F115'),
+    ('PF_PRIMER_EPISODIO', 'F125'),
+    ('PF_PRIMER_EPISODIO', 'F135'),
+    ('PF_PRIMER_EPISODIO', 'F145'),
+    ('PF_PRIMER_EPISODIO', 'F155'),
+    ('PF_PRIMER_EPISODIO', 'F165'),
+    ('PF_PRIMER_EPISODIO', 'F175'),
+    ('PF_PRIMER_EPISODIO', 'F185'),
+    ('PF_PRIMER_EPISODIO', 'F195')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_DETERIORO_COGNITIVO', 'F000'),
+    ('PF_DETERIORO_COGNITIVO', 'F001'),
+    ('PF_DETERIORO_COGNITIVO', 'F002'),
+    ('PF_DETERIORO_COGNITIVO', 'F003'),
+    ('PF_DETERIORO_COGNITIVO', 'F004'),
+    ('PF_DETERIORO_COGNITIVO', 'F005'),
+    ('PF_DETERIORO_COGNITIVO', 'F006'),
+    ('PF_DETERIORO_COGNITIVO', 'F007'),
+    ('PF_DETERIORO_COGNITIVO', 'F008'),
+    ('PF_DETERIORO_COGNITIVO', 'F009'),
+    ('PF_DETERIORO_COGNITIVO', 'F010'),
+    ('PF_DETERIORO_COGNITIVO', 'F011'),
+    ('PF_DETERIORO_COGNITIVO', 'F012'),
+    ('PF_DETERIORO_COGNITIVO', 'F013'),
+    ('PF_DETERIORO_COGNITIVO', 'F014'),
+    ('PF_DETERIORO_COGNITIVO', 'F015'),
+    ('PF_DETERIORO_COGNITIVO', 'F016'),
+    ('PF_DETERIORO_COGNITIVO', 'F017'),
+    ('PF_DETERIORO_COGNITIVO', 'F018'),
+    ('PF_DETERIORO_COGNITIVO', 'F019'),
+    ('PF_DETERIORO_COGNITIVO', 'F020'),
+    ('PF_DETERIORO_COGNITIVO', 'F021'),
+    ('PF_DETERIORO_COGNITIVO', 'F022'),
+    ('PF_DETERIORO_COGNITIVO', 'F023'),
+    ('PF_DETERIORO_COGNITIVO', 'F024'),
+    ('PF_DETERIORO_COGNITIVO', 'F025'),
+    ('PF_DETERIORO_COGNITIVO', 'F026'),
+    ('PF_DETERIORO_COGNITIVO', 'F027'),
+    ('PF_DETERIORO_COGNITIVO', 'F028'),
+    ('PF_DETERIORO_COGNITIVO', 'F029'),
+    ('PF_DETERIORO_COGNITIVO', 'F030'),
+    ('PF_DETERIORO_COGNITIVO', 'F031'),
+    ('PF_DETERIORO_COGNITIVO', 'F032'),
+    ('PF_DETERIORO_COGNITIVO', 'F033'),
+    ('PF_DETERIORO_COGNITIVO', 'F034'),
+    ('PF_DETERIORO_COGNITIVO', 'F035'),
+    ('PF_DETERIORO_COGNITIVO', 'F036'),
+    ('PF_DETERIORO_COGNITIVO', 'F037'),
+    ('PF_DETERIORO_COGNITIVO', 'F038'),
+    ('PF_DETERIORO_COGNITIVO', 'F039'),
+    ('PF_DETERIORO_COGNITIVO', 'F040'),
+    ('PF_DETERIORO_COGNITIVO', 'F041'),
+    ('PF_DETERIORO_COGNITIVO', 'F042'),
+    ('PF_DETERIORO_COGNITIVO', 'F043'),
+    ('PF_DETERIORO_COGNITIVO', 'F044'),
+    ('PF_DETERIORO_COGNITIVO', 'F045'),
+    ('PF_DETERIORO_COGNITIVO', 'F046'),
+    ('PF_DETERIORO_COGNITIVO', 'F047'),
+    ('PF_DETERIORO_COGNITIVO', 'F048'),
+    ('PF_DETERIORO_COGNITIVO', 'F049'),
+    ('PF_DETERIORO_COGNITIVO', 'F050'),
+    ('PF_DETERIORO_COGNITIVO', 'F051'),
+    ('PF_DETERIORO_COGNITIVO', 'F052'),
+    ('PF_DETERIORO_COGNITIVO', 'F053'),
+    ('PF_DETERIORO_COGNITIVO', 'F054'),
+    ('PF_DETERIORO_COGNITIVO', 'F055'),
+    ('PF_DETERIORO_COGNITIVO', 'F056'),
+    ('PF_DETERIORO_COGNITIVO', 'F057'),
+    ('PF_DETERIORO_COGNITIVO', 'F058'),
+    ('PF_DETERIORO_COGNITIVO', 'F059'),
+    ('PF_DETERIORO_COGNITIVO', 'F060'),
+    ('PF_DETERIORO_COGNITIVO', 'F061'),
+    ('PF_DETERIORO_COGNITIVO', 'F062'),
+    ('PF_DETERIORO_COGNITIVO', 'F063'),
+    ('PF_DETERIORO_COGNITIVO', 'F064'),
+    ('PF_DETERIORO_COGNITIVO', 'F065'),
+    ('PF_DETERIORO_COGNITIVO', 'F066'),
+    ('PF_DETERIORO_COGNITIVO', 'F067'),
+    ('PF_DETERIORO_COGNITIVO', 'F068'),
+    ('PF_DETERIORO_COGNITIVO', 'F069'),
+    ('PF_DETERIORO_COGNITIVO', 'F070'),
+    ('PF_DETERIORO_COGNITIVO', 'F071'),
+    ('PF_DETERIORO_COGNITIVO', 'F072'),
+    ('PF_DETERIORO_COGNITIVO', 'F073'),
+    ('PF_DETERIORO_COGNITIVO', 'F074'),
+    ('PF_DETERIORO_COGNITIVO', 'F075'),
+    ('PF_DETERIORO_COGNITIVO', 'F076'),
+    ('PF_DETERIORO_COGNITIVO', 'F077'),
+    ('PF_DETERIORO_COGNITIVO', 'F078'),
+    ('PF_DETERIORO_COGNITIVO', 'F079'),
+    ('PF_DETERIORO_COGNITIVO', 'F080'),
+    ('PF_DETERIORO_COGNITIVO', 'F081'),
+    ('PF_DETERIORO_COGNITIVO', 'F082'),
+    ('PF_DETERIORO_COGNITIVO', 'F083'),
+    ('PF_DETERIORO_COGNITIVO', 'F084'),
+    ('PF_DETERIORO_COGNITIVO', 'F085'),
+    ('PF_DETERIORO_COGNITIVO', 'F086'),
+    ('PF_DETERIORO_COGNITIVO', 'F087'),
+    ('PF_DETERIORO_COGNITIVO', 'F088'),
+    ('PF_DETERIORO_COGNITIVO', 'F089'),
+    ('PF_DETERIORO_COGNITIVO', 'F090'),
+    ('PF_DETERIORO_COGNITIVO', 'F091'),
+    ('PF_DETERIORO_COGNITIVO', 'F092'),
+    ('PF_DETERIORO_COGNITIVO', 'F093'),
+    ('PF_DETERIORO_COGNITIVO', 'F094'),
+    ('PF_DETERIORO_COGNITIVO', 'F095'),
+    ('PF_DETERIORO_COGNITIVO', 'F096'),
+    ('PF_DETERIORO_COGNITIVO', 'F097'),
+    ('PF_DETERIORO_COGNITIVO', 'F098'),
+    ('PF_DETERIORO_COGNITIVO', 'F099')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_REHAB_PSICOSOCIAL', 'F200'),
+    ('PF_REHAB_PSICOSOCIAL', 'F201'),
+    ('PF_REHAB_PSICOSOCIAL', 'F202'),
+    ('PF_REHAB_PSICOSOCIAL', 'F203'),
+    ('PF_REHAB_PSICOSOCIAL', 'F204'),
+    ('PF_REHAB_PSICOSOCIAL', 'F205'),
+    ('PF_REHAB_PSICOSOCIAL', 'F206'),
+    ('PF_REHAB_PSICOSOCIAL', 'F207'),
+    ('PF_REHAB_PSICOSOCIAL', 'F208'),
+    ('PF_REHAB_PSICOSOCIAL', 'F209'),
+    ('PF_REHAB_PSICOSOCIAL', 'F210'),
+    ('PF_REHAB_PSICOSOCIAL', 'F211'),
+    ('PF_REHAB_PSICOSOCIAL', 'F212'),
+    ('PF_REHAB_PSICOSOCIAL', 'F213'),
+    ('PF_REHAB_PSICOSOCIAL', 'F214'),
+    ('PF_REHAB_PSICOSOCIAL', 'F215'),
+    ('PF_REHAB_PSICOSOCIAL', 'F216'),
+    ('PF_REHAB_PSICOSOCIAL', 'F217'),
+    ('PF_REHAB_PSICOSOCIAL', 'F218'),
+    ('PF_REHAB_PSICOSOCIAL', 'F219'),
+    ('PF_REHAB_PSICOSOCIAL', 'F220'),
+    ('PF_REHAB_PSICOSOCIAL', 'F221'),
+    ('PF_REHAB_PSICOSOCIAL', 'F222'),
+    ('PF_REHAB_PSICOSOCIAL', 'F223'),
+    ('PF_REHAB_PSICOSOCIAL', 'F224'),
+    ('PF_REHAB_PSICOSOCIAL', 'F225'),
+    ('PF_REHAB_PSICOSOCIAL', 'F226'),
+    ('PF_REHAB_PSICOSOCIAL', 'F227'),
+    ('PF_REHAB_PSICOSOCIAL', 'F228'),
+    ('PF_REHAB_PSICOSOCIAL', 'F229'),
+    ('PF_REHAB_PSICOSOCIAL', 'F230'),
+    ('PF_REHAB_PSICOSOCIAL', 'F231'),
+    ('PF_REHAB_PSICOSOCIAL', 'F232'),
+    ('PF_REHAB_PSICOSOCIAL', 'F233'),
+    ('PF_REHAB_PSICOSOCIAL', 'F234'),
+    ('PF_REHAB_PSICOSOCIAL', 'F235'),
+    ('PF_REHAB_PSICOSOCIAL', 'F236'),
+    ('PF_REHAB_PSICOSOCIAL', 'F237'),
+    ('PF_REHAB_PSICOSOCIAL', 'F238'),
+    ('PF_REHAB_PSICOSOCIAL', 'F239'),
+    ('PF_REHAB_PSICOSOCIAL', 'F240'),
+    ('PF_REHAB_PSICOSOCIAL', 'F241'),
+    ('PF_REHAB_PSICOSOCIAL', 'F242'),
+    ('PF_REHAB_PSICOSOCIAL', 'F243'),
+    ('PF_REHAB_PSICOSOCIAL', 'F244'),
+    ('PF_REHAB_PSICOSOCIAL', 'F245'),
+    ('PF_REHAB_PSICOSOCIAL', 'F246'),
+    ('PF_REHAB_PSICOSOCIAL', 'F247'),
+    ('PF_REHAB_PSICOSOCIAL', 'F248'),
+    ('PF_REHAB_PSICOSOCIAL', 'F249'),
+    ('PF_REHAB_PSICOSOCIAL', 'F250'),
+    ('PF_REHAB_PSICOSOCIAL', 'F251'),
+    ('PF_REHAB_PSICOSOCIAL', 'F252'),
+    ('PF_REHAB_PSICOSOCIAL', 'F253'),
+    ('PF_REHAB_PSICOSOCIAL', 'F254'),
+    ('PF_REHAB_PSICOSOCIAL', 'F255'),
+    ('PF_REHAB_PSICOSOCIAL', 'F256'),
+    ('PF_REHAB_PSICOSOCIAL', 'F257'),
+    ('PF_REHAB_PSICOSOCIAL', 'F258'),
+    ('PF_REHAB_PSICOSOCIAL', 'F259'),
+    ('PF_REHAB_PSICOSOCIAL', 'F280'),
+    ('PF_REHAB_PSICOSOCIAL', 'F281'),
+    ('PF_REHAB_PSICOSOCIAL', 'F282'),
+    ('PF_REHAB_PSICOSOCIAL', 'F283'),
+    ('PF_REHAB_PSICOSOCIAL', 'F284'),
+    ('PF_REHAB_PSICOSOCIAL', 'F285'),
+    ('PF_REHAB_PSICOSOCIAL', 'F286'),
+    ('PF_REHAB_PSICOSOCIAL', 'F287'),
+    ('PF_REHAB_PSICOSOCIAL', 'F288'),
+    ('PF_REHAB_PSICOSOCIAL', 'F289'),
+    ('PF_REHAB_PSICOSOCIAL', 'F290'),
+    ('PF_REHAB_PSICOSOCIAL', 'F291'),
+    ('PF_REHAB_PSICOSOCIAL', 'F292'),
+    ('PF_REHAB_PSICOSOCIAL', 'F293'),
+    ('PF_REHAB_PSICOSOCIAL', 'F294'),
+    ('PF_REHAB_PSICOSOCIAL', 'F295'),
+    ('PF_REHAB_PSICOSOCIAL', 'F296'),
+    ('PF_REHAB_PSICOSOCIAL', 'F297'),
+    ('PF_REHAB_PSICOSOCIAL', 'F298'),
+    ('PF_REHAB_PSICOSOCIAL', 'F299'),
+    ('PF_REHAB_PSICOSOCIAL', 'F312'),
+    ('PF_REHAB_PSICOSOCIAL', 'F315'),
+    ('PF_REHAB_PSICOSOCIAL', 'F060'),
+    ('PF_REHAB_PSICOSOCIAL', 'F061'),
+    ('PF_REHAB_PSICOSOCIAL', 'F062'),
+    ('PF_REHAB_PSICOSOCIAL', 'F531'),
+    ('PF_REHAB_PSICOSOCIAL', 'F105'),
+    ('PF_REHAB_PSICOSOCIAL', 'F115'),
+    ('PF_REHAB_PSICOSOCIAL', 'F125'),
+    ('PF_REHAB_PSICOSOCIAL', 'F135'),
+    ('PF_REHAB_PSICOSOCIAL', 'F145'),
+    ('PF_REHAB_PSICOSOCIAL', 'F155'),
+    ('PF_REHAB_PSICOSOCIAL', 'F165'),
+    ('PF_REHAB_PSICOSOCIAL', 'F175'),
+    ('PF_REHAB_PSICOSOCIAL', 'F185'),
+    ('PF_REHAB_PSICOSOCIAL', 'F195')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_grupo_dx (id_paquete, codigo_cie10) VALUES
+    ('PF_REHAB_LABORAL', 'F200'),
+    ('PF_REHAB_LABORAL', 'F201'),
+    ('PF_REHAB_LABORAL', 'F202'),
+    ('PF_REHAB_LABORAL', 'F203'),
+    ('PF_REHAB_LABORAL', 'F204'),
+    ('PF_REHAB_LABORAL', 'F205'),
+    ('PF_REHAB_LABORAL', 'F206'),
+    ('PF_REHAB_LABORAL', 'F207'),
+    ('PF_REHAB_LABORAL', 'F208'),
+    ('PF_REHAB_LABORAL', 'F209'),
+    ('PF_REHAB_LABORAL', 'F210'),
+    ('PF_REHAB_LABORAL', 'F211'),
+    ('PF_REHAB_LABORAL', 'F212'),
+    ('PF_REHAB_LABORAL', 'F213'),
+    ('PF_REHAB_LABORAL', 'F214'),
+    ('PF_REHAB_LABORAL', 'F215'),
+    ('PF_REHAB_LABORAL', 'F216'),
+    ('PF_REHAB_LABORAL', 'F217'),
+    ('PF_REHAB_LABORAL', 'F218'),
+    ('PF_REHAB_LABORAL', 'F219'),
+    ('PF_REHAB_LABORAL', 'F220'),
+    ('PF_REHAB_LABORAL', 'F221'),
+    ('PF_REHAB_LABORAL', 'F222'),
+    ('PF_REHAB_LABORAL', 'F223'),
+    ('PF_REHAB_LABORAL', 'F224'),
+    ('PF_REHAB_LABORAL', 'F225'),
+    ('PF_REHAB_LABORAL', 'F226'),
+    ('PF_REHAB_LABORAL', 'F227'),
+    ('PF_REHAB_LABORAL', 'F228'),
+    ('PF_REHAB_LABORAL', 'F229'),
+    ('PF_REHAB_LABORAL', 'F230'),
+    ('PF_REHAB_LABORAL', 'F231'),
+    ('PF_REHAB_LABORAL', 'F232'),
+    ('PF_REHAB_LABORAL', 'F233'),
+    ('PF_REHAB_LABORAL', 'F234'),
+    ('PF_REHAB_LABORAL', 'F235'),
+    ('PF_REHAB_LABORAL', 'F236'),
+    ('PF_REHAB_LABORAL', 'F237'),
+    ('PF_REHAB_LABORAL', 'F238'),
+    ('PF_REHAB_LABORAL', 'F239'),
+    ('PF_REHAB_LABORAL', 'F240'),
+    ('PF_REHAB_LABORAL', 'F241'),
+    ('PF_REHAB_LABORAL', 'F242'),
+    ('PF_REHAB_LABORAL', 'F243'),
+    ('PF_REHAB_LABORAL', 'F244'),
+    ('PF_REHAB_LABORAL', 'F245'),
+    ('PF_REHAB_LABORAL', 'F246'),
+    ('PF_REHAB_LABORAL', 'F247'),
+    ('PF_REHAB_LABORAL', 'F248'),
+    ('PF_REHAB_LABORAL', 'F249'),
+    ('PF_REHAB_LABORAL', 'F250'),
+    ('PF_REHAB_LABORAL', 'F251'),
+    ('PF_REHAB_LABORAL', 'F252'),
+    ('PF_REHAB_LABORAL', 'F253'),
+    ('PF_REHAB_LABORAL', 'F254'),
+    ('PF_REHAB_LABORAL', 'F255'),
+    ('PF_REHAB_LABORAL', 'F256'),
+    ('PF_REHAB_LABORAL', 'F257'),
+    ('PF_REHAB_LABORAL', 'F258'),
+    ('PF_REHAB_LABORAL', 'F259'),
+    ('PF_REHAB_LABORAL', 'F280'),
+    ('PF_REHAB_LABORAL', 'F281'),
+    ('PF_REHAB_LABORAL', 'F282'),
+    ('PF_REHAB_LABORAL', 'F283'),
+    ('PF_REHAB_LABORAL', 'F284'),
+    ('PF_REHAB_LABORAL', 'F285'),
+    ('PF_REHAB_LABORAL', 'F286'),
+    ('PF_REHAB_LABORAL', 'F287'),
+    ('PF_REHAB_LABORAL', 'F288'),
+    ('PF_REHAB_LABORAL', 'F289'),
+    ('PF_REHAB_LABORAL', 'F290'),
+    ('PF_REHAB_LABORAL', 'F291'),
+    ('PF_REHAB_LABORAL', 'F292'),
+    ('PF_REHAB_LABORAL', 'F293'),
+    ('PF_REHAB_LABORAL', 'F294'),
+    ('PF_REHAB_LABORAL', 'F295'),
+    ('PF_REHAB_LABORAL', 'F296'),
+    ('PF_REHAB_LABORAL', 'F297'),
+    ('PF_REHAB_LABORAL', 'F298'),
+    ('PF_REHAB_LABORAL', 'F299'),
+    ('PF_REHAB_LABORAL', 'F312'),
+    ('PF_REHAB_LABORAL', 'F315'),
+    ('PF_REHAB_LABORAL', 'F060'),
+    ('PF_REHAB_LABORAL', 'F061'),
+    ('PF_REHAB_LABORAL', 'F062'),
+    ('PF_REHAB_LABORAL', 'F531'),
+    ('PF_REHAB_LABORAL', 'F105'),
+    ('PF_REHAB_LABORAL', 'F115'),
+    ('PF_REHAB_LABORAL', 'F125'),
+    ('PF_REHAB_LABORAL', 'F135'),
+    ('PF_REHAB_LABORAL', 'F145'),
+    ('PF_REHAB_LABORAL', 'F155'),
+    ('PF_REHAB_LABORAL', 'F165'),
+    ('PF_REHAB_LABORAL', 'F175'),
+    ('PF_REHAB_LABORAL', 'F185'),
+    ('PF_REHAB_LABORAL', 'F195')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle (id_paquete, tipo_componente, cantidad_minima) VALUES
+    ('PF_VIOLENCIA_FAMILIAR', 'consulta_especializada', 2),
+    ('PF_VIOLENCIA_FAMILIAR', 'psicoterapia', 6),
+    ('PF_VIOLENCIA_FAMILIAR', 'intervencion_familiar', 2),
+    ('PF_VIOLENCIA_FAMILIAR', 'visita_o_movilizacion', 1),
+    ('PF_VIOLENCIA_SEXUAL', 'consulta_especializada', 2),
+    ('PF_VIOLENCIA_SEXUAL', 'intervencion_o_psicoterapia', 6),
+    ('PF_VIOLENCIA_SEXUAL', 'intervencion_familiar', 2),
+    ('PF_VIOLENCIA_SEXUAL', 'visita_o_movilizacion', 1),
+    ('PF_MALTRATO_NNA', 'consulta_especializada', 2),
+    ('PF_MALTRATO_NNA', 'psicoterapia', 6),
+    ('PF_MALTRATO_NNA', 'intervencion_familiar', 2),
+    ('PF_MALTRATO_NNA', 'visita_o_movilizacion', 1),
+    ('PF_VS_NNA', 'consulta_especializada', 2),
+    ('PF_VS_NNA', 'intervencion_o_psicoterapia', 6),
+    ('PF_VS_NNA', 'intervencion_familiar', 2),
+    ('PF_VS_NNA', 'visita_o_movilizacion', 1),
+    ('PF_AUTISMO', 'consulta_especializada', 2),
+    ('PF_AUTISMO', 'psicoterapia', 6),
+    ('PF_AUTISMO', 'grupal_to_tl', 6),
+    ('PF_AUTISMO', 'visita_o_movilizacion', 1),
+    ('PF_TM_COMPORTAMIENTO', 'consulta_sm', 2),
+    ('PF_TM_COMPORTAMIENTO', 'intervencion_o_psicoterapia', 6),
+    ('PF_TM_COMPORTAMIENTO', 'intervencion_familiar', 3),
+    ('PF_TM_COMPORTAMIENTO', 'visita_o_movilizacion', 1),
+    ('PF_DEPRESION', 'consulta_sm', 3),
+    ('PF_DEPRESION', 'psicoterapia_o_intervencion', 6),
+    ('PF_DEPRESION', 'psicoeducacion', 1),
+    ('PF_DEPRESION', 'intervencion_familiar', 2),
+    ('PF_DEPRESION', 'visita_o_movilizacion', 1),
+    ('PF_CONDUCTA_SUICIDA', 'consulta_sm', 3),
+    ('PF_CONDUCTA_SUICIDA', 'psicoterapia_o_intervencion', 6),
+    ('PF_CONDUCTA_SUICIDA', 'intervencion_familiar', 2),
+    ('PF_CONDUCTA_SUICIDA', 'visita_o_movilizacion', 1),
+    ('PF_ANSIEDAD', 'consulta_sm', 3),
+    ('PF_ANSIEDAD', 'psicoterapia_o_intervencion', 6),
+    ('PF_ANSIEDAD', 'intervencion_familiar', 2),
+    ('PF_ANSIEDAD', 'visita_o_movilizacion', 1),
+    ('PF_CONSUMO_PERJUDICIAL', 'consejeria', 1),
+    ('PF_CONSUMO_PERJUDICIAL', 'intervencion_breve', 4),
+    ('PF_DEPENDENCIA_ALC_TAB', 'consulta_medica', 4),
+    ('PF_DEPENDENCIA_ALC_TAB', 'entrevista_motivacional', 2),
+    ('PF_DEPENDENCIA_ALC_TAB', 'psicoterapia', 4),
+    ('PF_DEPENDENCIA_ALC_TAB', 'intervencion_familiar', 2),
+    ('PF_REHAB_PSICOSOCIAL_ALC', 'taller_psicoeducativo', 6),
+    ('PF_REHAB_PSICOSOCIAL_ALC', 'intervencion_familiar', 2),
+    ('PF_PSICOSIS', 'evaluacion_integral', 1),
+    ('PF_PSICOSIS', 'consulta_especializada', 4),
+    ('PF_PSICOSIS', 'consulta_sm', 10),
+    ('PF_PSICOSIS', 'psicoterapia', 6),
+    ('PF_PSICOSIS', 'intervencion_individual', 6),
+    ('PF_PSICOSIS', 'psicoeducacion', 4),
+    ('PF_PSICOSIS', 'rehabilitacion_laboral', 6),
+    ('PF_PSICOSIS', 'intervencion_familiar', 5),
+    ('PF_PSICOSIS', 'visita_o_movilizacion', 2),
+    ('PF_PRIMER_EPISODIO', 'consulta_especializada', 3),
+    ('PF_PRIMER_EPISODIO', 'psicoterapia', 6),
+    ('PF_PRIMER_EPISODIO', 'intervencion_familiar', 5),
+    ('PF_PRIMER_EPISODIO', 'visita_o_movilizacion', 2),
+    ('PF_DETERIORO_COGNITIVO', 'evaluacion_integral', 1),
+    ('PF_DETERIORO_COGNITIVO', 'consulta_especializada', 4),
+    ('PF_DETERIORO_COGNITIVO', 'consulta_sm', 10),
+    ('PF_DETERIORO_COGNITIVO', 'psicoterapia', 6),
+    ('PF_DETERIORO_COGNITIVO', 'intervencion_individual', 6),
+    ('PF_DETERIORO_COGNITIVO', 'psicoeducacion', 4),
+    ('PF_DETERIORO_COGNITIVO', 'rehabilitacion_laboral', 6),
+    ('PF_DETERIORO_COGNITIVO', 'terapia_cognitiva', 6),
+    ('PF_DETERIORO_COGNITIVO', 'psicoeducacion_familia', 5),
+    ('PF_DETERIORO_COGNITIVO', 'otras_terapias_o_to', 4),
+    ('PF_DETERIORO_COGNITIVO', 'visita_o_movilizacion', 2),
+    ('PF_REHAB_PSICOSOCIAL', 'sesiones_rehabilitacion', 10),
+    ('PF_REHAB_LABORAL', 'rehabilitacion_laboral', 6)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_VIOLENCIA_FAMILIAR', 'consulta_especializada', '99215')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_VIOLENCIA_FAMILIAR', 'psicoterapia', '90806'),
+    ('PF_VIOLENCIA_FAMILIAR', 'psicoterapia', '90834'),
+    ('PF_VIOLENCIA_FAMILIAR', 'psicoterapia', '90860')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_VIOLENCIA_FAMILIAR', 'intervencion_familiar', 'C2111.01'),
+    ('PF_VIOLENCIA_FAMILIAR', 'intervencion_familiar', '96100.01'),
+    ('PF_VIOLENCIA_FAMILIAR', 'intervencion_familiar', '90847')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_VIOLENCIA_FAMILIAR', 'visita_o_movilizacion', 'C0011'),
+    ('PF_VIOLENCIA_FAMILIAR', 'visita_o_movilizacion', 'C1043')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_VIOLENCIA_SEXUAL', 'consulta_especializada', '99215')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_VIOLENCIA_SEXUAL', 'intervencion_o_psicoterapia', '99207.01'),
+    ('PF_VIOLENCIA_SEXUAL', 'intervencion_o_psicoterapia', '90806'),
+    ('PF_VIOLENCIA_SEXUAL', 'intervencion_o_psicoterapia', '90834'),
+    ('PF_VIOLENCIA_SEXUAL', 'intervencion_o_psicoterapia', '90860')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_VIOLENCIA_SEXUAL', 'intervencion_familiar', 'C2111.01'),
+    ('PF_VIOLENCIA_SEXUAL', 'intervencion_familiar', '96100.01'),
+    ('PF_VIOLENCIA_SEXUAL', 'intervencion_familiar', '90847')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_VIOLENCIA_SEXUAL', 'visita_o_movilizacion', 'C0011'),
+    ('PF_VIOLENCIA_SEXUAL', 'visita_o_movilizacion', 'C1043')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_MALTRATO_NNA', 'consulta_especializada', '99215')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_MALTRATO_NNA', 'psicoterapia', '90806'),
+    ('PF_MALTRATO_NNA', 'psicoterapia', '90834'),
+    ('PF_MALTRATO_NNA', 'psicoterapia', '90860')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_MALTRATO_NNA', 'intervencion_familiar', 'C2111.01'),
+    ('PF_MALTRATO_NNA', 'intervencion_familiar', '96100.01'),
+    ('PF_MALTRATO_NNA', 'intervencion_familiar', '90847')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_MALTRATO_NNA', 'visita_o_movilizacion', 'C0011'),
+    ('PF_MALTRATO_NNA', 'visita_o_movilizacion', 'C1043')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_VS_NNA', 'consulta_especializada', '99215')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_VS_NNA', 'intervencion_o_psicoterapia', '99207.01'),
+    ('PF_VS_NNA', 'intervencion_o_psicoterapia', '90806'),
+    ('PF_VS_NNA', 'intervencion_o_psicoterapia', '90834'),
+    ('PF_VS_NNA', 'intervencion_o_psicoterapia', '90860')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_VS_NNA', 'intervencion_familiar', 'C2111.01'),
+    ('PF_VS_NNA', 'intervencion_familiar', '96100.01'),
+    ('PF_VS_NNA', 'intervencion_familiar', '90847')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_VS_NNA', 'visita_o_movilizacion', 'C0011'),
+    ('PF_VS_NNA', 'visita_o_movilizacion', 'C1043')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_AUTISMO', 'consulta_especializada', '99214.06'),
+    ('PF_AUTISMO', 'consulta_especializada', '99215')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_AUTISMO', 'psicoterapia', '90806'),
+    ('PF_AUTISMO', 'psicoterapia', '90834'),
+    ('PF_AUTISMO', 'psicoterapia', '90860')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_AUTISMO', 'grupal_to_tl', '99207.02'),
+    ('PF_AUTISMO', 'grupal_to_tl', 'Z507'),
+    ('PF_AUTISMO', 'grupal_to_tl', '97009')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_AUTISMO', 'visita_o_movilizacion', 'C0011'),
+    ('PF_AUTISMO', 'visita_o_movilizacion', 'C1043')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_TM_COMPORTAMIENTO', 'consulta_sm', '99207'),
+    ('PF_TM_COMPORTAMIENTO', 'consulta_sm', '99214.06'),
+    ('PF_TM_COMPORTAMIENTO', 'consulta_sm', '99215')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_TM_COMPORTAMIENTO', 'intervencion_o_psicoterapia', '99207.01'),
+    ('PF_TM_COMPORTAMIENTO', 'intervencion_o_psicoterapia', '90806'),
+    ('PF_TM_COMPORTAMIENTO', 'intervencion_o_psicoterapia', '90834'),
+    ('PF_TM_COMPORTAMIENTO', 'intervencion_o_psicoterapia', '90860')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_TM_COMPORTAMIENTO', 'intervencion_familiar', 'C2111.01'),
+    ('PF_TM_COMPORTAMIENTO', 'intervencion_familiar', '96100.01'),
+    ('PF_TM_COMPORTAMIENTO', 'intervencion_familiar', '90847')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_TM_COMPORTAMIENTO', 'visita_o_movilizacion', 'C0011'),
+    ('PF_TM_COMPORTAMIENTO', 'visita_o_movilizacion', 'C1043')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DEPRESION', 'consulta_sm', '99207'),
+    ('PF_DEPRESION', 'consulta_sm', '99215'),
+    ('PF_DEPRESION', 'consulta_sm', '99214.06')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DEPRESION', 'psicoterapia_o_intervencion', '90806'),
+    ('PF_DEPRESION', 'psicoterapia_o_intervencion', '90834'),
+    ('PF_DEPRESION', 'psicoterapia_o_intervencion', '90860'),
+    ('PF_DEPRESION', 'psicoterapia_o_intervencion', '99207.01')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DEPRESION', 'psicoeducacion', '99207.04')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DEPRESION', 'intervencion_familiar', 'C2111.01'),
+    ('PF_DEPRESION', 'intervencion_familiar', '96100.01'),
+    ('PF_DEPRESION', 'intervencion_familiar', '90847')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DEPRESION', 'visita_o_movilizacion', 'C0011'),
+    ('PF_DEPRESION', 'visita_o_movilizacion', 'C1043')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_CONDUCTA_SUICIDA', 'consulta_sm', '99207'),
+    ('PF_CONDUCTA_SUICIDA', 'consulta_sm', '99215'),
+    ('PF_CONDUCTA_SUICIDA', 'consulta_sm', '99214.06')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_CONDUCTA_SUICIDA', 'psicoterapia_o_intervencion', '99207.01'),
+    ('PF_CONDUCTA_SUICIDA', 'psicoterapia_o_intervencion', '90806'),
+    ('PF_CONDUCTA_SUICIDA', 'psicoterapia_o_intervencion', '90834'),
+    ('PF_CONDUCTA_SUICIDA', 'psicoterapia_o_intervencion', '90860')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_CONDUCTA_SUICIDA', 'intervencion_familiar', 'C2111.01'),
+    ('PF_CONDUCTA_SUICIDA', 'intervencion_familiar', '96100.01'),
+    ('PF_CONDUCTA_SUICIDA', 'intervencion_familiar', '90847')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_CONDUCTA_SUICIDA', 'visita_o_movilizacion', 'C0011'),
+    ('PF_CONDUCTA_SUICIDA', 'visita_o_movilizacion', 'C1043')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_ANSIEDAD', 'consulta_sm', '99207'),
+    ('PF_ANSIEDAD', 'consulta_sm', '99215'),
+    ('PF_ANSIEDAD', 'consulta_sm', '99214.06')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_ANSIEDAD', 'psicoterapia_o_intervencion', '99207.01'),
+    ('PF_ANSIEDAD', 'psicoterapia_o_intervencion', '90806'),
+    ('PF_ANSIEDAD', 'psicoterapia_o_intervencion', '90834'),
+    ('PF_ANSIEDAD', 'psicoterapia_o_intervencion', '90860')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_ANSIEDAD', 'intervencion_familiar', 'C2111.01'),
+    ('PF_ANSIEDAD', 'intervencion_familiar', '96100.01'),
+    ('PF_ANSIEDAD', 'intervencion_familiar', '90847')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_ANSIEDAD', 'visita_o_movilizacion', 'C0011'),
+    ('PF_ANSIEDAD', 'visita_o_movilizacion', 'C1043')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_CONSUMO_PERJUDICIAL', 'consejeria', '99401.13')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_CONSUMO_PERJUDICIAL', 'intervencion_breve', '99207.01')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DEPENDENCIA_ALC_TAB', 'consulta_medica', '99215'),
+    ('PF_DEPENDENCIA_ALC_TAB', 'consulta_medica', '99214.06')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DEPENDENCIA_ALC_TAB', 'entrevista_motivacional', '96150')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DEPENDENCIA_ALC_TAB', 'psicoterapia', '90834'),
+    ('PF_DEPENDENCIA_ALC_TAB', 'psicoterapia', '90806'),
+    ('PF_DEPENDENCIA_ALC_TAB', 'psicoterapia', '90860')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DEPENDENCIA_ALC_TAB', 'intervencion_familiar', 'C2111.01'),
+    ('PF_DEPENDENCIA_ALC_TAB', 'intervencion_familiar', '96100.01'),
+    ('PF_DEPENDENCIA_ALC_TAB', 'intervencion_familiar', '90847')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_REHAB_PSICOSOCIAL_ALC', 'taller_psicoeducativo', '90857')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_REHAB_PSICOSOCIAL_ALC', 'intervencion_familiar', 'C2111.01')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_PSICOSIS', 'evaluacion_integral', '99366')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_PSICOSIS', 'consulta_especializada', '99215')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_PSICOSIS', 'consulta_sm', '99207')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_PSICOSIS', 'psicoterapia', '90806'),
+    ('PF_PSICOSIS', 'psicoterapia', '90834'),
+    ('PF_PSICOSIS', 'psicoterapia', '90860')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_PSICOSIS', 'intervencion_individual', '99207.01')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_PSICOSIS', 'psicoeducacion', '99207.04')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_PSICOSIS', 'rehabilitacion_laboral', '97537.01')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_PSICOSIS', 'intervencion_familiar', 'C2111.01'),
+    ('PF_PSICOSIS', 'intervencion_familiar', '96100.01'),
+    ('PF_PSICOSIS', 'intervencion_familiar', '90847')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_PSICOSIS', 'visita_o_movilizacion', 'C0011'),
+    ('PF_PSICOSIS', 'visita_o_movilizacion', 'C1043')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_PRIMER_EPISODIO', 'consulta_especializada', '99215')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_PRIMER_EPISODIO', 'psicoterapia', '90806'),
+    ('PF_PRIMER_EPISODIO', 'psicoterapia', '90834'),
+    ('PF_PRIMER_EPISODIO', 'psicoterapia', '90860')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_PRIMER_EPISODIO', 'intervencion_familiar', 'C2111.01'),
+    ('PF_PRIMER_EPISODIO', 'intervencion_familiar', '96100.01'),
+    ('PF_PRIMER_EPISODIO', 'intervencion_familiar', '90847')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_PRIMER_EPISODIO', 'visita_o_movilizacion', 'C0011'),
+    ('PF_PRIMER_EPISODIO', 'visita_o_movilizacion', 'C1043')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DETERIORO_COGNITIVO', 'evaluacion_integral', '99366')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DETERIORO_COGNITIVO', 'consulta_especializada', '99215')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DETERIORO_COGNITIVO', 'consulta_sm', '99207')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DETERIORO_COGNITIVO', 'psicoterapia', '90806'),
+    ('PF_DETERIORO_COGNITIVO', 'psicoterapia', '90834'),
+    ('PF_DETERIORO_COGNITIVO', 'psicoterapia', '90860')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DETERIORO_COGNITIVO', 'intervencion_individual', '99207.01')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DETERIORO_COGNITIVO', 'psicoeducacion', '99207.04')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DETERIORO_COGNITIVO', 'rehabilitacion_laboral', '97537.01')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DETERIORO_COGNITIVO', 'terapia_cognitiva', '96100.05')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DETERIORO_COGNITIVO', 'psicoeducacion_familia', 'C2111.01')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DETERIORO_COGNITIVO', 'otras_terapias_o_to', 'Z501'),
+    ('PF_DETERIORO_COGNITIVO', 'otras_terapias_o_to', '97535.01')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_DETERIORO_COGNITIVO', 'visita_o_movilizacion', 'C0011'),
+    ('PF_DETERIORO_COGNITIVO', 'visita_o_movilizacion', 'C1043')
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_REHAB_PSICOSOCIAL', 'sesiones_rehabilitacion', '99207')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO paquete_detalle_codigos (id_paquete, tipo_componente, codigo_item) VALUES
+    ('PF_REHAB_LABORAL', 'rehabilitacion_laboral', '97537.01')
+ON CONFLICT DO NOTHING;
+
+COMMIT;
