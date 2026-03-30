@@ -26,6 +26,7 @@ const { getProduccionProfesional, getProfesionales } = require('../reportes/prod
 
 const authRoutes = require('./auth');
 const verifyToken = require('../middleware/authMiddleware');
+const runMigrations = require('../db/migrate');
 
 // ── Configuración ─────────────────────────────────────────────────────────────
 const PORT = parseInt(process.env.PORT, 10) || 3000;
@@ -393,31 +394,33 @@ app.use((req, res) => {
 });
 
 // ── Arrancar servidor ─────────────────────────────────────────────────────────
-const server = app.listen(PORT, () => {
-  console.log(`\n🚀 Servidor corriendo en http://localhost:${PORT}\n`);
-  console.log('   GET  /api/dashboard');
-  console.log('   GET  /api/paquetes?estado=abierto&periodo=2026-02');
-  console.log('   GET  /api/paquetes/proximos-a-vencer?dias=30');
-  console.log('   GET  /api/paquetes/:id');
-  console.log('   GET  /api/pacientes/buscar?q=dni_o_nombre');
-  console.log('   GET  /api/pacientes/:id/paquetes');
-  console.log('   GET  /api/profesional/:id/paquetes');
-  console.log('   POST /api/importar/maestros');
-  console.log('   POST /api/importar/nominaltrama');
-  console.log('   GET  /api/historial-cargas\n');
-});
-
-// ── Cierre ordenado ───────────────────────────────────────────────────────────
-const shutdown = async (signal) => {
-  console.log(`\n⚠️  ${signal} recibido. Cerrando...`);
-  server.close(async () => {
-    await pool.end();
-    console.log('✔ Servidor detenido.');
-    process.exit(0);
+runMigrations().then(() => {
+  const server = app.listen(PORT, () => {
+    console.log(`\n🚀 Servidor corriendo en http://localhost:${PORT}\n`);
+    console.log('   GET  /api/dashboard');
+    console.log('   GET  /api/paquetes?estado=abierto&periodo=2026-02');
+    console.log('   GET  /api/paquetes/proximos-a-vencer?dias=30');
+    console.log('   GET  /api/paquetes/:id');
+    console.log('   GET  /api/pacientes/buscar?q=dni_o_nombre');
+    console.log('   GET  /api/pacientes/:id/paquetes');
+    console.log('   GET  /api/profesional/:id/paquetes');
+    console.log('   POST /api/importar/maestros');
+    console.log('   POST /api/importar/nominaltrama');
+    console.log('   GET  /api/historial-cargas\n');
   });
-};
 
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+  // ── Cierre ordenado ───────────────────────────────────────────────────────────
+  const shutdown = async (signal) => {
+    console.log(`\n⚠️  ${signal} recibido. Cerrando...`);
+    server.close(async () => {
+      await pool.end();
+      console.log('✔ Servidor detenido.');
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+});
 
 module.exports = app;
