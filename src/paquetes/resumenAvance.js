@@ -305,14 +305,17 @@ function getMetaDashboard(nombre) {
   if (n.includes('autista')) return 10;
   if (n.includes('comportamiento')) return 240;
   if (n.includes('depresi')) return 210;
-  if (n.includes('suicida')) return 100;
+  if (n.includes('suicida')) return 10;
   if (n.includes('ansiedad')) return 300;
   if (n.includes('motivacional')) return 108;
   if (n.includes('dependencia')) return 45;
   if (n.includes('alcohol')) return 45;
   if (n.includes('esquizofrenia')) return 40;
   if (n.includes('mental grave')) return 50;
-  if (n.includes('psicosocial')) return 50;
+  if (n.includes('primer episodio')) return 40;
+  if (n.includes('deterioro cognitivo')) return 50;
+  if (n.includes('laboral')) return 50;
+  if (n.includes('psicosocial')) return 45;
   return 100;
 }
 
