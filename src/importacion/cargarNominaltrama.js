@@ -163,18 +163,37 @@ function convertirValor(valor, columnaBD) {
 
   // ── Fechas ──
   if (COLS_FECHA.has(columnaBD)) {
-    // Verificar que al menos luce como fecha antes de parsear
-    if (!FECHA_DATE_RE.test(limpio) &&
-        !FECHA_DATE_INV_RE.test(limpio) &&
-        !FECHA_TIMESTAMP_RE.test(limpio)) {
-      return null;
+    let parsedIsoDate = null;
+    let year = null;
+    
+    // Probar si es DD/MM/YYYY o DD-MM-YYYY (con o sin HH:MM)
+    const matchInv = limpio.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:[T\s]+(\d{1,2}:\d{1,2}(?::\d{1,2})?))?/);
+    if (matchInv) {
+      const [, dia, mes, anio, time] = matchInv;
+      parsedIsoDate = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+      if (time) parsedIsoDate += ` ${time}`;
+      year = parseInt(anio, 10);
+    } else {
+      // Probar si es YYYY-MM-DD o YYYY/MM/DD (con o sin HH:MM)
+      const matchDir = limpio.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s]+(\d{1,2}:\d{1,2}(?::\d{1,2})?))?/);
+      if (matchDir) {
+        const [, anio, mes, dia, time] = matchDir;
+        parsedIsoDate = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+        if (time) parsedIsoDate += ` ${time}`;
+        year = parseInt(anio, 10);
+      } else {
+        return null;
+      }
     }
-    const d = new Date(limpio);
-    if (isNaN(d.getTime())) return null;
-    // Rango razonable: 1900–2100
-    const year = d.getFullYear();
+
+    // Validar rango razonable: 1900–2100
     if (year < 1900 || year > 2100) return null;
-    return limpio;
+
+    // Verificar que la fecha final sea válida (esto descarta meses como 13 o días como 32)
+    const d = new Date(parsedIsoDate);
+    if (isNaN(d.getTime())) return null;
+
+    return parsedIsoDate;
   } else
 
   // ── Texto (truncar a 500 caracteres como protección) ──

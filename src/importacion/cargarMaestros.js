@@ -144,11 +144,37 @@ const COLUMNAS_FECHA = new Set([
 
 function parseFecha(valor) {
   if (!valor) return valor;
-  const match = valor.match(/^(\d{1,2})\/(\d{2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
-  if (!match) return valor;
-  const [, dia, mes, anio, hora, min] = match;
-  const iso = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-  return hora ? `${iso} ${hora.padStart(2, '0')}:${min}` : iso;
+  let parsedIsoDate = null;
+  let year = null;
+  
+  // Probar si es DD/MM/YYYY o DD-MM-YYYY (con o sin HH:MM)
+  const matchInv = valor.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:[T\s]+(\d{1,2}:\d{1,2}(?::\d{1,2})?))?/);
+  if (matchInv) {
+    const [, dia, mes, anio, time] = matchInv;
+    parsedIsoDate = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+    if (time) parsedIsoDate += ` ${time}`;
+    year = parseInt(anio, 10);
+  } else {
+    // Probar si es YYYY-MM-DD o YYYY/MM/DD (con o sin HH:MM)
+    const matchDir = valor.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s]+(\d{1,2}:\d{1,2}(?::\d{1,2})?))?/);
+    if (matchDir) {
+      const [, anio, mes, dia, time] = matchDir;
+      parsedIsoDate = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+      if (time) parsedIsoDate += ` ${time}`;
+      year = parseInt(anio, 10);
+    } else {
+      return valor; // Retornar original si no parece fecha
+    }
+  }
+
+  // Validar rango razonable: 1900–2100
+  if (year < 1900 || year > 2100) return valor;
+
+  // Verificar que la fecha final sea válida (esto descarta meses como 13 o días como 32)
+  const d = new Date(parsedIsoDate);
+  if (isNaN(d.getTime())) return valor;
+
+  return parsedIsoDate;
 }
 
 // ── Función principal ────────────────────────────────────────────────────────
