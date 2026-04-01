@@ -376,7 +376,7 @@ app.use((err, req, res, next) => {
 });
 
 // ── SPA Fallback ──────────────────────────────────────────────────────────────
-app.get(/(.*)/, (req, res, next) => {
+app.get('/{*path}', (req, res, next) => {
   if (req.originalUrl.startsWith('/api')) return next();
   const indexPath = path.join(__dirname, '..', '..', 'public', 'index.html');
   if (fs.existsSync(indexPath)) {
@@ -391,34 +391,41 @@ app.use((req, res) => {
   res.status(404).json({ error: `Endpoint no encontrado: ${req.method} ${req.originalUrl}` });
 });
 
-// ── Arrancar servidor ─────────────────────────────────────────────────────────
-runMigrations().then(() => {
-  const server = app.listen(PORT, () => {
-    console.log(`\n🚀 Servidor corriendo en http://localhost:${PORT}\n`);
-    console.log('   GET  /api/dashboard');
-    console.log('   GET  /api/paquetes?estado=abierto&periodo=2026-02');
-    console.log('   GET  /api/paquetes/proximos-a-vencer?dias=30');
-    console.log('   GET  /api/paquetes/:id');
-    console.log('   GET  /api/pacientes/buscar?q=dni_o_nombre');
-    console.log('   GET  /api/pacientes/:id/paquetes');
-    console.log('   GET  /api/profesional/:id/paquetes');
-    console.log('   POST /api/importar/maestros');
-    console.log('   POST /api/importar/nominaltrama');
-    console.log('   GET  /api/historial-cargas\n');
-  });
-
-  // ── Cierre ordenado ───────────────────────────────────────────────────────────
-  const shutdown = async (signal) => {
-    console.log(`\n⚠️  ${signal} recibido. Cerrando...`);
+/**
+ * Función de cierre ordenado para liberar recursos.
+ */
+const shutdown = async (signal, server) => {
+  console.log(`\n⚠️  ${signal} recibido. Cerrando...`);
+  if (server) {
     server.close(async () => {
       await pool.end();
-      console.log('✔ Servidor detenido.');
+      console.log('✔ Servidor detenido y pool de base de datos cerrado.');
       process.exit(0);
     });
-  };
+  } else {
+    await pool.end();
+    process.exit(0);
+  }
+};
 
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
-});
+// ── Arrancar servidor ─────────────────────────────────────────────────────────
+runMigrations()
+  .then(() => {
+    const server = app.listen(PORT, () => {
+      console.log(`\n🚀 Servidor corriendo en http://localhost:${PORT}\n`);
+      console.log('   APIs listas para recibir peticiones.');
+    });
+
+    // Escuchar señales de terminación
+    process.on('SIGTERM', () => shutdown('SIGTERM', server));
+    process.on('SIGINT',  () => shutdown('SIGINT',  server));
+  })
+  .catch((err) => {
+    console.error('\n✖ ERROR FATAL AL INICIAR EL SERVIDOR:');
+    console.error(`  ${err.message}\n`);
+    console.error('  Verifica que DATABASE_URL sea correcta y');
+    console.error('  que la base de datos PostgreSQL esté activa.');
+    process.exit(1);
+  });
 
 module.exports = app;
