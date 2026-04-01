@@ -138,6 +138,19 @@ function limpiarValor(valor) {
   return limpio === '' ? null : limpio;
 }
 
+const COLUMNAS_FECHA = new Set([
+  'Fecha_Nacimiento', 'Fecha_Alta', 'Fecha_Baja', 'Fecha_Modificacion',
+]);
+
+function parseFecha(valor) {
+  if (!valor) return valor;
+  const match = valor.match(/^(\d{1,2})\/(\d{2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+  if (!match) return valor;
+  const [, dia, mes, anio, hora, min] = match;
+  const iso = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+  return hora ? `${iso} ${hora.padStart(2, '0')}:${min}` : iso;
+}
+
 // ── Función principal ────────────────────────────────────────────────────────
 /**
  * Lee un archivo CSV de maestro y lo carga a PostgreSQL con upsert.
@@ -199,7 +212,10 @@ async function cargarMaestro(rutaArchivo, usuario = 'sistema') {
       await client.query('SAVEPOINT fila_sp');
 
       try {
-        const valores = columnasCSV.map(colCSV => limpiarValor(row[colCSV]));
+        const valores = columnasCSV.map(colCSV => {
+          const v = limpiarValor(row[colCSV]);
+          return COLUMNAS_FECHA.has(colCSV) ? parseFecha(v) : v;
+        });
 
         if (!valores[indicePK]) {
           errores++;
