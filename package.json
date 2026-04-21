@@ -1,0 +1,23 @@
+{
+  "name": "Backend",
+  "version": "1.0.0",
+  "description": "Backend CSMC RENACER",
+  "main": "src/api/server.js",
+  "scripts": {
+    "start": "node src/api/server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "csv-parse": "^6.2.1",
+    "docxtemplater": "^3.68.5",
+    "dotenv": "^17.3.1",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "iconv-lite": "^0.7.2",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
+    "pg": "^8.20.0",
+    "pizzip": "^3.2.0"
+  }
+}
