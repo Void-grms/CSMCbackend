@@ -5,9 +5,16 @@ const pool = new Pool({
   client_encoding: 'utf8',
 });
 
-async function getProduccionProfesional(filtros) {
-  const { fechaInicio, fechaFin, idProfesional, qPaciente, codigoItem, limite = 500 } = filtros;
-  
+function parseListaIds(valor) {
+  if (!valor) return [];
+  return String(valor).split(',').map(s => s.trim()).filter(Boolean);
+}
+
+function construirCondiciones(filtros) {
+  const {
+    fechaInicio, fechaFin, idProfesional, qPaciente, codigoItem, idPaquetes,
+  } = filtros;
+
   const condiciones = [];
   const valores = [];
 
@@ -28,13 +35,12 @@ async function getProduccionProfesional(filtros) {
     condiciones.push(`(p.numero_documento ILIKE $${valores.length} OR CONCAT(p.apellido_paterno, ' ', p.apellido_materno, ' ', p.nombres) ILIKE $${valores.length})`);
   }
   if (codigoItem) {
-    // Soporta múltiples códigos separados por coma: "F32,90806,99207"
-    const codigos = codigoItem.split(',').map(c => c.trim()).filter(Boolean);
+    const codigos = String(codigoItem).split(',').map(c => c.trim()).filter(Boolean);
     if (codigos.length === 1) {
       valores.push(`%${codigos[0]}%`);
       condiciones.push(`a.codigo_item ILIKE $${valores.length}`);
     } else if (codigos.length > 1) {
-      const placeholders = codigos.map((c, i) => {
+      const placeholders = codigos.map(c => {
         valores.push(`%${c}%`);
         return `a.codigo_item ILIKE $${valores.length}`;
       });
@@ -42,11 +48,44 @@ async function getProduccionProfesional(filtros) {
     }
   }
 
+  const paquetesIds = parseListaIds(idPaquetes);
+  if (paquetesIds.length > 0) {
+    valores.push(paquetesIds);
+    const idx = valores.length;
+    // Atención pertenece a un paquete si su codigo_item está dentro de:
+    //   • el grupo Dx de la versión actual del paquete, o
+    //   • los códigos de algún componente de la versión actual del paquete.
+    condiciones.push(`a.codigo_item IN (
+      SELECT pgdv.codigo_cie10
+        FROM paquete_grupo_dx_version pgdv
+        JOIN paquete_version_actual pva
+          ON pva.id_paquete = pgdv.id_paquete AND pva.version_actual = pgdv.version
+       WHERE pgdv.id_paquete = ANY($${idx})
+      UNION
+      SELECT pdcv.codigo_item
+        FROM paquete_detalle_codigos_version pdcv
+        JOIN paquete_version_actual pva
+          ON pva.id_paquete = pdcv.id_paquete AND pva.version_actual = pdcv.version
+       WHERE pdcv.id_paquete = ANY($${idx})
+    )`);
+  }
+
+  return { condiciones, valores };
+}
+
+async function getProduccionProfesional(filtros) {
+  const { sinLimite, limite = 500 } = filtros;
+  const { condiciones, valores } = construirCondiciones(filtros);
   const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
-  valores.push(limite);
+
+  let limitClause = '';
+  if (!sinLimite) {
+    valores.push(limite);
+    limitClause = `LIMIT $${valores.length}`;
+  }
 
   const query = `
-    SELECT 
+    SELECT
       a.id_cita,
       a.id_correlativo,
       a.fecha_atencion,
@@ -69,7 +108,37 @@ async function getProduccionProfesional(filtros) {
     JOIN paciente p ON a.id_paciente = p.id_paciente
     ${where}
     ORDER BY a.fecha_atencion DESC, a.id_cita, a.id_correlativo
-    LIMIT $${valores.length}
+    ${limitClause}
+  `;
+
+  const { rows } = await pool.query(query, valores);
+  return rows;
+}
+
+/**
+ * Resumen agregado: cantidad de atenciones y citas por profesional,
+ * aplicando los mismos filtros que getProduccionProfesional (sin límite).
+ */
+async function getResumenProduccion(filtros) {
+  const { condiciones, valores } = construirCondiciones(filtros);
+  const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
+
+  const query = `
+    SELECT
+      pr.id_personal,
+      pr.id_profesion AS profesion,
+      CONCAT(pr.apellido_paterno, ' ', pr.apellido_materno, ' ', pr.nombres) AS nombre_profesional,
+      COUNT(*)::INT                          AS total_atenciones,
+      COUNT(DISTINCT a.id_cita)::INT         AS total_citas,
+      COUNT(DISTINCT a.id_paciente)::INT     AS total_pacientes,
+      MIN(a.fecha_atencion)                  AS primera_atencion,
+      MAX(a.fecha_atencion)                  AS ultima_atencion
+    FROM atencion a
+    JOIN profesional pr ON a.id_personal = pr.id_personal
+    JOIN paciente p ON a.id_paciente = p.id_paciente
+    ${where}
+    GROUP BY pr.id_personal, pr.id_profesion, pr.apellido_paterno, pr.apellido_materno, pr.nombres
+    ORDER BY total_atenciones DESC, nombre_profesional
   `;
 
   const { rows } = await pool.query(query, valores);
@@ -87,7 +156,30 @@ async function getProfesionales() {
     return rows;
 }
 
+/**
+ * Catálogo ligero de paquetes (versión actual y activa) para alimentar
+ * el selector "Tipo de paquete" en el reporte de producción.
+ */
+async function getPaquetesCatalogo() {
+  const query = `
+    SELECT
+      pdv.id_paquete,
+      pdv.nombre,
+      pdv.codigo_paquete
+    FROM paquete_definicion_version pdv
+    JOIN paquete_version_actual pva
+      ON pva.id_paquete = pdv.id_paquete
+     AND pva.version_actual = pdv.version
+    WHERE pdv.activo = TRUE
+    ORDER BY pdv.codigo_paquete NULLS LAST, pdv.nombre
+  `;
+  const { rows } = await pool.query(query);
+  return rows;
+}
+
 module.exports = {
   getProduccionProfesional,
-  getProfesionales
+  getResumenProduccion,
+  getProfesionales,
+  getPaquetesCatalogo,
 };

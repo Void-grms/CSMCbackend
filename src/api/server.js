@@ -23,7 +23,12 @@ const {
 const { cargarMaestro } = require('../importacion/cargarMaestros');
 const { cargarNominaltrama } = require('../importacion/cargarNominaltrama');
 
-const { getProduccionProfesional, getProfesionales } = require('../reportes/produccionProfesional');
+const {
+  getProduccionProfesional,
+  getResumenProduccion,
+  getProfesionales,
+  getPaquetesCatalogo,
+} = require('../reportes/produccionProfesional');
 
 const { buscarPacienteDocumentos, generarConstanciaSimple } = require('../documentos/generarDocumentos');
 
@@ -31,6 +36,7 @@ const { getReporteHIS, generarExcelHIS } = require('../reportes/reporteHIS');
 const { getReporteHISDiario, generarExcelHISDiario } = require('../reportes/reporteHISDiario');
 
 const authRoutes = require('./auth');
+const ajustesRoutes = require('./ajustes');
 const verifyToken = require('../middleware/authMiddleware');
 const runMigrations = require('../db/migrate');
 
@@ -143,7 +149,7 @@ app.get('/api/paquetes', async (req, res) => {
   try {
     // Si estado='todos', pasamos undefined para que no filtre
     const estadoQuery = req.query.estado === 'todos' ? undefined : req.query.estado;
-    const { periodo, tipo, campoFecha, fechaDesde, fechaHasta, ordenDias } = req.query;
+    const { periodo, tipo, dx, campoFecha, fechaDesde, fechaHasta, ordenDias } = req.query;
     const limite = safeInt(req.query.limite, 50);
     const offset = safeInt(req.query.offset, 0);
 
@@ -151,6 +157,7 @@ app.get('/api/paquetes', async (req, res) => {
       estado: estadoQuery,
       periodo,
       tipo,
+      dx,
       campoFecha,
       fechaDesde,
       fechaHasta,
@@ -349,12 +356,44 @@ app.get('/api/reportes/produccion-profesional', async (req, res) => {
       idProfesional: req.query.idProfesional,
       qPaciente: req.query.qPaciente,
       codigoItem: req.query.codigoItem,
-      limite: safeInt(req.query.limite, 500)
+      idPaquetes: req.query.idPaquetes,
+      limite: safeInt(req.query.limite, 500),
+      sinLimite: req.query.sinLimite === '1' || req.query.sinLimite === 'true',
     };
     const data = await getProduccionProfesional(filtros);
     res.json(data);
   } catch (err) {
     console.error('Error /api/reportes/produccion-profesional:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Resumen agregado por profesional (cantidad de atenciones), usa los mismos filtros.
+app.get('/api/reportes/produccion-profesional/resumen', async (req, res) => {
+  try {
+    const filtros = {
+      fechaInicio: req.query.fechaInicio,
+      fechaFin: req.query.fechaFin,
+      idProfesional: req.query.idProfesional,
+      qPaciente: req.query.qPaciente,
+      codigoItem: req.query.codigoItem,
+      idPaquetes: req.query.idPaquetes,
+    };
+    const data = await getResumenProduccion(filtros);
+    res.json(data);
+  } catch (err) {
+    console.error('Error /api/reportes/produccion-profesional/resumen:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Catálogo ligero de paquetes para el selector del reporte (sin auth admin).
+app.get('/api/reportes/paquetes-catalogo', async (req, res) => {
+  try {
+    const data = await getPaquetesCatalogo();
+    res.json(data);
+  } catch (err) {
+    console.error('Error /api/reportes/paquetes-catalogo:', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
@@ -380,6 +419,9 @@ const requireAdmin = (req, res, next) => {
   }
   next();
 };
+
+// ── Módulo Ajustes (admin) ──
+app.use('/api/ajustes', requireAdmin, ajustesRoutes);
 
 // Buscar pacientes para el módulo de documentos
 app.get('/api/documentos/buscar-paciente', requireAdmin, async (req, res) => {

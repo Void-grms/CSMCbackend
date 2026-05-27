@@ -588,8 +588,8 @@ async function getPaquetesPorProfesional(idPersonal) {
 // ═════════════════════════════════════════════════════════════════════════════
 
 async function getPaquetesPaginados(filtros = {}) {
-  const { estado, periodo, tipo, campoFecha, fechaDesde, fechaHasta, ordenDias, limite = 50, offset = 0 } = filtros;
-  
+  const { estado, periodo, tipo, dx, campoFecha, fechaDesde, fechaHasta, ordenDias, limite = 50, offset = 0 } = filtros;
+
   const condiciones = [];
   const valores     = [];
 
@@ -599,8 +599,29 @@ async function getPaquetesPaginados(filtros = {}) {
   }
 
   if (tipo && tipo !== 'todos') {
-    valores.push(tipo);
-    condiciones.push(`pp.id_paquete = $${valores.length}`);
+    const tipos = Array.isArray(tipo)
+      ? tipo
+      : String(tipo).split(',').map(t => t.trim()).filter(Boolean);
+    if (tipos.length === 1) {
+      valores.push(tipos[0]);
+      condiciones.push(`pp.id_paquete = $${valores.length}`);
+    } else if (tipos.length > 1) {
+      valores.push(tipos);
+      condiciones.push(`pp.id_paquete = ANY($${valores.length}::text[])`);
+    }
+  }
+
+  if (dx && dx !== 'todos') {
+    const dxs = Array.isArray(dx)
+      ? dx
+      : String(dx).split(',').map(d => d.trim()).filter(Boolean);
+    if (dxs.length === 1) {
+      valores.push(dxs[0]);
+      condiciones.push(`pp.dx_principal = $${valores.length}`);
+    } else if (dxs.length > 1) {
+      valores.push(dxs);
+      condiciones.push(`pp.dx_principal = ANY($${valores.length}::text[])`);
+    }
   }
 
   if (periodo) {
@@ -685,6 +706,12 @@ async function getPaquetesPaginados(filtros = {}) {
       ...paq,
       estado: estadoReal,
       porcentaje_avance: porcentaje,
+      componentes: avance.map(c => ({
+        tipo_componente: c.tipo_componente,
+        cantidad_minima: c.cantidad_minima,
+        cantidad_realizada: c.cantidad_realizada,
+        cumplido: c.cumplido,
+      })),
     });
   }
 
