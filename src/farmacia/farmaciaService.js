@@ -170,11 +170,17 @@ async function getPacienteDetalle(idPaciente) {
   if (!pac.length) return null;
 
   // Historial de entregas con su nota manual (si la tiene).
+  //   num_dispensacion = valor_lab del registro 99199.05 (la trama del HIS lo
+  //     numera por tratamiento y lo reinicia a 1 cuando cambia el diagnóstico).
+  //   dx = diagnóstico CIE-10 de la misma cita (correlativo más bajo con código
+  //     que empieza por letra; en los datos siempre es el correlativo 1).
   const { rows: historial } = await pool.query(
     `SELECT
        a.id_cita,
        a.id_correlativo,
        a.fecha_atencion,
+       a.valor_lab        AS num_dispensacion,
+       dxc.codigo_item    AS dx,
        CONCAT_WS(' ', pr.apellido_paterno, pr.apellido_materno, pr.nombres) AS nombre_profesional,
        a.id_turno,
        n.medicamento,
@@ -184,12 +190,23 @@ async function getPacienteDetalle(idPaciente) {
      LEFT JOIN profesional pr ON pr.id_personal = a.id_personal
      LEFT JOIN farmacia_dispensacion_nota n
        ON n.id_cita = a.id_cita AND n.id_correlativo = a.id_correlativo
+     LEFT JOIN LATERAL (
+       SELECT dx.codigo_item
+       FROM atencion dx
+       WHERE dx.id_cita = a.id_cita
+         AND dx.codigo_item ~ '^[A-Za-z]'
+       ORDER BY dx.id_correlativo ASC
+       LIMIT 1
+     ) dxc ON TRUE
      WHERE a.id_paciente = $1 AND a.codigo_item = $2
      ORDER BY a.fecha_atencion DESC, a.id_correlativo DESC`,
     [idPaciente, COD_DISPENSACION]
   );
 
   const info = rows[0] || null;
+  // La última entrega (historial está ordenado por fecha DESC) define el
+  // diagnóstico y número de dispensación vigentes del paciente.
+  const ultima = historial[0] || null;
 
   return {
     paciente: pac[0],
@@ -205,6 +222,8 @@ async function getPacienteDetalle(idPaciente) {
           intervalo_dias:       info.intervalo_dias,
           intervalo_personalizado: info.intervalo_personalizado,
           activo:               info.activo,
+          dx_actual:            ultima?.dx ?? null,
+          num_dispensacion_actual: ultima?.num_dispensacion ?? null,
         }
       : null,
     historial,
