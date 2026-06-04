@@ -37,6 +37,7 @@ const { getReporteHISDiario, generarExcelHISDiario } = require('../reportes/repo
 
 const authRoutes = require('./auth');
 const ajustesRoutes = require('./ajustes');
+const farmaciaRoutes = require('./farmacia');
 const verifyToken = require('../middleware/authMiddleware');
 const runMigrations = require('../db/migrate');
 
@@ -114,6 +115,9 @@ app.use('/api/auth', authRoutes);
 
 // Proteger todas las rutas /api restantes
 app.use('/api', verifyToken);
+
+// ── Módulo Farmacia (lectura: todos; escritura: admin, controlado en el router) ──
+app.use('/api/farmacia', farmaciaRoutes);
 
 // ═════════════════════════════════════════════════════════════════════════════
 // ENDPOINT 1 — Dashboard
@@ -326,15 +330,21 @@ app.delete('/api/database/limpiar', async (req, res) => {
       return res.status(401).json({ ok: false, error: 'Clave incorrecta' });
     }
 
-    // Usar CASCADE para asegurar que no haya violaciones de llave foránea
+    // Usar CASCADE para asegurar que no haya violaciones de llave foránea.
+    // Las tablas farmacia_paciente_config y farmacia_dispensacion_nota se incluyen
+    // explícitamente (también caerían por CASCADE): la config por paciente y las
+    // notas manuales se reinician junto con los datos. farmacia_config_global NO se
+    // toca: es preferencia del sistema, no datos de pacientes.
     await pool.query(`
-      TRUNCATE TABLE 
-        atencion, 
-        paciente, 
-        profesional, 
-        registrador, 
-        paquete_paciente, 
-        historial_cargas
+      TRUNCATE TABLE
+        atencion,
+        paciente,
+        profesional,
+        registrador,
+        paquete_paciente,
+        historial_cargas,
+        farmacia_paciente_config,
+        farmacia_dispensacion_nota
       CASCADE;
     `);
 
