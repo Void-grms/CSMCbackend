@@ -31,6 +31,8 @@ const {
 } = require('../reportes/produccionProfesional');
 
 const { buscarPacienteDocumentos, generarConstanciaSimple } = require('../documentos/generarDocumentos');
+const { generarPaqueteDocx } = require('../documentos/generarPaqueteDocx');
+const { generarReporteAtenciones } = require('../documentos/generarReporteAtenciones');
 
 const { getReporteHIS, generarExcelHIS } = require('../reportes/reporteHIS');
 const { getReporteHISDiario, generarExcelHISDiario } = require('../reportes/reporteHISDiario');
@@ -187,6 +189,22 @@ app.get('/api/paquetes/:id', async (req, res) => {
   } catch (err) {
     console.error(`Error /api/paquetes/${req.params.id}:`, err.message);
     res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Descargar el resumen del paquete en .docx (disponible para usuarios autenticados).
+app.get('/api/paquetes/:id/documento', async (req, res) => {
+  try {
+    const result = await generarPaqueteDocx(req.params.id);
+    if (!result) return res.status(404).json({ ok: false, error: 'Paquete no encontrado' });
+
+    // Override del Content-Type (el middleware global pone application/json).
+    res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.set('Content-Disposition', `attachment; filename="${result.filename}"`);
+    res.send(result.buffer);
+  } catch (err) {
+    console.error(`Error /api/paquetes/${req.params.id}/documento:`, err.message);
+    res.status(500).json({ ok: false, error: 'Error al generar el documento' });
   }
 });
 
@@ -463,6 +481,28 @@ app.get('/api/documentos/constancia-simple/:pacienteId', requireAdmin, async (re
   } catch (err) {
     console.error('Error /api/documentos/constancia-simple:', err.message);
     res.status(500).json({ ok: false, error: 'Error al generar el documento' });
+  }
+});
+
+// Reporte de atenciones de varios pacientes (.docx)
+app.post('/api/documentos/reporte-atenciones', requireAdmin, async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids) ? req.body.ids : [];
+    if (!ids.length) {
+      return res.status(400).json({ ok: false, error: 'Debe enviar al menos un paciente.' });
+    }
+
+    const result = await generarReporteAtenciones(ids);
+    if (!result) {
+      return res.status(404).json({ ok: false, error: 'No se encontraron pacientes válidos.' });
+    }
+
+    res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.set('Content-Disposition', `attachment; filename="${result.filename}"`);
+    res.send(result.buffer);
+  } catch (err) {
+    console.error('Error /api/documentos/reporte-atenciones:', err.message);
+    res.status(500).json({ ok: false, error: 'Error al generar el reporte' });
   }
 });
 
