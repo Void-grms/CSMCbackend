@@ -34,6 +34,7 @@ const {
 const { buscarPacienteDocumentos, generarConstanciaSimple } = require('../documentos/generarDocumentos');
 const { generarPaqueteDocx } = require('../documentos/generarPaqueteDocx');
 const { generarReporteAtenciones } = require('../documentos/generarReporteAtenciones');
+const { verificarCodificacion, generarReporteCodificacion } = require('../documentos/verificarCodificacion');
 
 const { getReporteHIS, generarExcelHIS } = require('../reportes/reporteHIS');
 const { getReporteHISDiario, generarExcelHISDiario } = require('../reportes/reporteHISDiario');
@@ -620,6 +621,43 @@ app.post('/api/documentos/reporte-atenciones', requireAdmin, async (req, res) =>
     res.send(result.buffer);
   } catch (err) {
     console.error('Error /api/documentos/reporte-atenciones:', err.message);
+    res.status(500).json({ ok: false, error: 'Error al generar el reporte' });
+  }
+});
+
+// Verificación de codificación de usuarios nuevos (datos para la tabla en pantalla)
+app.get('/api/documentos/verificacion-codificacion', requireAdmin, async (req, res) => {
+  try {
+    const anio = safeInt(req.query.anio, null);
+    const mes = safeInt(req.query.mes, null);
+    if (!anio || !mes) {
+      return res.status(400).json({ ok: false, error: 'Parámetros anio y mes requeridos.' });
+    }
+    const data = await verificarCodificacion({ anio, mes });
+    res.json(data);
+  } catch (err) {
+    console.error('Error /api/documentos/verificacion-codificacion:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Verificación de codificación de usuarios nuevos (.docx descargable)
+app.get('/api/documentos/verificacion-codificacion/descargar', requireAdmin, async (req, res) => {
+  try {
+    const anio = safeInt(req.query.anio, null);
+    const mes = safeInt(req.query.mes, null);
+    if (!anio || !mes) {
+      return res.status(400).json({ ok: false, error: 'Parámetros anio y mes requeridos.' });
+    }
+    const result = await generarReporteCodificacion({ anio, mes });
+    if (!result) {
+      return res.status(404).json({ ok: false, error: 'No hay usuarios nuevos en el periodo seleccionado.' });
+    }
+    res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.set('Content-Disposition', `attachment; filename="${result.filename}"`);
+    res.send(result.buffer);
+  } catch (err) {
+    console.error('Error /api/documentos/verificacion-codificacion/descargar:', err.message);
     res.status(500).json({ ok: false, error: 'Error al generar el reporte' });
   }
 });
