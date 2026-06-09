@@ -22,6 +22,7 @@ const {
 
 const { cargarMaestro } = require('../importacion/cargarMaestros');
 const { cargarNominaltrama } = require('../importacion/cargarNominaltrama');
+const { calcularPaquetes } = require('../paquetes/calcularPaquetes');
 
 const {
   getProduccionProfesional,
@@ -370,6 +371,123 @@ app.delete('/api/database/limpiar', async (req, res) => {
   } catch (err) {
     console.error('Error /api/database/limpiar:', err.message);
     res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// ENDPOINT 10C — Periodos cargados (meses con datos en `atencion`)
+// ═════════════════════════════════════════════════════════════════════════════
+// Lista los meses presentes en la tabla `atencion` para poder borrarlos de forma
+// selectiva. Usa las columnas anio/mes (las mismas que trae cada nominaltrama).
+app.get('/api/database/periodos', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT
+        anio,
+        mes,
+        COUNT(*)::int                    AS atenciones,
+        COUNT(DISTINCT id_cita)::int     AS citas,
+        COUNT(DISTINCT id_paciente)::int AS pacientes
+      FROM atencion
+      WHERE anio IS NOT NULL AND mes IS NOT NULL
+      GROUP BY anio, mes
+      ORDER BY anio DESC, mes DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error /api/database/periodos:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// ENDPOINT 10D — Borrar datos por periodo (mes)
+// ═════════════════════════════════════════════════════════════════════════════
+// Borra las atenciones de uno o varios meses (anio/mes) sin tocar los maestros
+// (paciente/profesional/registrador), que pueden tener atenciones en otros meses.
+// Las notas de farmacia caen por la FK ON DELETE CASCADE. Tras borrar se reconstruye
+// `paquete_paciente` desde cero, porque calcularPaquetes es aditivo y no elimina los
+// paquetes que quedarían huérfanos ni revierte estados.
+app.delete('/api/database/limpiar-periodo', async (req, res) => {
+  const { clave, periodos } = req.body || {};
+
+  if (clave !== 'Grimes020110') {
+    return res.status(401).json({ ok: false, error: 'Clave incorrecta' });
+  }
+
+  // Validar y normalizar la lista de periodos: [{ anio, mes }]
+  if (!Array.isArray(periodos) || periodos.length === 0) {
+    return res.status(400).json({ ok: false, error: 'Debes indicar al menos un periodo (anio/mes) a borrar.' });
+  }
+
+  const limpios = [];
+  for (const p of periodos) {
+    const anio = parseInt(p?.anio, 10);
+    const mes = parseInt(p?.mes, 10);
+    if (!Number.isInteger(anio) || anio < 1900 || anio > 2100 ||
+        !Number.isInteger(mes) || mes < 1 || mes > 12) {
+      return res.status(400).json({ ok: false, error: `Periodo inválido: ${JSON.stringify(p)}` });
+    }
+    limpios.push({ anio, mes });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // 1. Borrar atenciones de los periodos seleccionados (las notas de farmacia
+    //    caen por CASCADE). Construimos un VALUES con los pares (anio, mes).
+    const valores = [];
+    const placeholders = limpios.map((p, i) => {
+      valores.push(p.anio, p.mes);
+      return `($${i * 2 + 1}::int, $${i * 2 + 2}::int)`;
+    });
+
+    const delAtenciones = await client.query(
+      `DELETE FROM atencion
+       WHERE (anio, mes) IN (${placeholders.join(', ')})`,
+      valores
+    );
+
+    // 2. Borrar las filas de historial_cargas de esos nominaltrama (nominaltramaYYYYMM.csv)
+    const archivos = limpios.map((p) => `nominaltrama${p.anio}${String(p.mes).padStart(2, '0')}.csv`);
+    const delHistorial = await client.query(
+      `DELETE FROM historial_cargas
+       WHERE tipo = 'nominaltrama' AND lower(archivo) = ANY($1::text[])`,
+      [archivos.map((a) => a.toLowerCase())]
+    );
+
+    // 3. Reconstruir paquete_paciente desde cero (calcularPaquetes es aditivo:
+    //    sin este TRUNCATE quedarían paquetes huérfanos del periodo borrado).
+    await client.query('TRUNCATE TABLE paquete_paciente CASCADE');
+
+    await client.query('COMMIT');
+
+    // 4. Recalcular paquetes con las atenciones restantes (fuera de la transacción;
+    //    calcularPaquetes gestiona sus propias transacciones).
+    let paquetesError = null;
+    try {
+      await calcularPaquetes();
+    } catch (err) {
+      paquetesError = err.message;
+      console.error('⚠ Recálculo de paquetes tras borrado por periodo falló:', err.message);
+    }
+
+    res.json({
+      ok: true,
+      periodos: limpios,
+      atenciones_borradas: delAtenciones.rowCount,
+      cargas_borradas: delHistorial.rowCount,
+      paquetes_recalculados: paquetesError === null,
+      paquetes_error: paquetesError,
+      mensaje: `Se borraron ${delAtenciones.rowCount} atenciones de ${limpios.length} periodo(s).`,
+    });
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch (_) { /* noop */ }
+    console.error('Error /api/database/limpiar-periodo:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  } finally {
+    client.release();
   }
 });
 
