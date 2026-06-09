@@ -1,15 +1,20 @@
 /**
  * verificarCodificacion.js — Verificación de errores de codificación HIS.
  *
- * Audita las citas de INGRESO (usuarios nuevos) de un periodo y comprueba dos
- * reglas de codificación que deben cumplirse en la MISMA cita:
+ * Audita las APERTURAS de paquete de un periodo. Una "apertura" es la PRIMERA
+ * vez (por fecha) que un paciente presenta un diagnóstico CIE-10, cuando esa
+ * primera cita tiene condición de servicio 'N' (Nuevo) o 'R' (Reingreso).
  *
- *   1. El diagnóstico CIE-10 debe estar en DEFINITIVO (tipo_diagnostico = 'D').
+ * Reglas que deben cumplirse en esa cita de apertura:
+ *   1. El diagnóstico debe estar en DEFINITIVO (tipo_diagnostico = 'D').
  *   2. La cita debe incluir el código PAI 99366.
  *
- * Una cita se considera "nueva" si cualquiera de sus filas tiene
- * id_condicion_servicio = 'N' (marca del HIS). El diagnóstico evaluado es el
- * principal: el primer CIE-10 (codigo_item que empieza con letra) por id_correlativo.
+ * El código PAI y el Definitivo solo se exigen al ABRIR el paquete; en las
+ * atenciones siguientes el diagnóstico pasa a Repetido (R) y ya no es necesario,
+ * por eso solo se evalúa la primera aparición de cada diagnóstico por paciente.
+ *
+ * Nota: la "primera aparición" se calcula sobre los datos cargados en la base
+ * (los paquetes abiertos antes del periodo más antiguo cargado no son visibles).
  *
  * Se calcula al vuelo sobre `atencion`, sin materializar nada.
  */
@@ -28,76 +33,67 @@ const COD_PAI = '99366';
 
 // Etiqueta legible del tipo de diagnóstico del HIS.
 const TIPO_DX_LABEL = { D: 'Definitivo', P: 'Presuntivo', R: 'Repetido' };
+// Etiqueta legible de la condición de servicio (solo aperturas).
+const COND_LABEL = { N: 'Nuevo', R: 'Reingreso' };
 
 /**
- * Obtiene las citas nuevas del periodo con su diagnóstico principal y si tienen
- * el código PAI. Devuelve las filas crudas (sin evaluar reglas todavía).
+ * Obtiene las aperturas de paquete del periodo: primera aparición de cada
+ * (paciente, diagnóstico) cuya primera cita es condición N o R y cae en el mes.
  */
-async function obtenerCitasNuevas(anio, mes) {
+async function obtenerAperturas(anio, mes) {
   const { rows } = await pool.query(
     `
-    WITH citas AS (
-      SELECT id_cita,
-             bool_or(id_condicion_servicio = 'N') AS es_nueva,
-             bool_or(codigo_item = $3)             AS tiene_pai
-      FROM atencion
-      WHERE anio = $1 AND mes = $2
-      GROUP BY id_cita
-    ),
-    -- Cabecera de la cita (primera fila por correlativo): paciente y fecha.
-    -- Se obtiene aquí para que las citas SIN diagnóstico CIE-10 igual muestren
-    -- al paciente y la fecha.
-    cab AS (
-      SELECT DISTINCT ON (a.id_cita)
-             a.id_cita, a.id_paciente, a.fecha_atencion
-      FROM atencion a
-      WHERE a.anio = $1 AND a.mes = $2
-      ORDER BY a.id_cita, a.id_correlativo ASC
-    ),
-    -- Diagnóstico principal: primer CIE-10 (codigo que empieza con letra).
-    dx AS (
-      SELECT DISTINCT ON (a.id_cita)
+    WITH dx_occ AS (
+      -- Cada aparición de un diagnóstico CIE-10 (codigo que empieza con letra).
+      SELECT a.id_paciente,
+             a.codigo_item       AS dx,
              a.id_cita,
-             a.codigo_item     AS dx,
-             a.tipo_diagnostico AS tipo_dx
+             a.fecha_atencion,
+             a.id_correlativo,
+             a.tipo_diagnostico   AS tipo_dx,
+             a.id_condicion_servicio AS cond
       FROM atencion a
-      WHERE a.anio = $1 AND a.mes = $2 AND a.codigo_item ~ '^[A-Za-z]'
-      ORDER BY a.id_cita, a.id_correlativo ASC
+      WHERE a.codigo_item ~ '^[A-Za-z]' AND a.id_paciente IS NOT NULL
+    ),
+    primera AS (
+      -- Primera aparición (fecha, luego correlativo) de cada (paciente, dx).
+      SELECT DISTINCT ON (id_paciente, dx)
+             id_paciente, dx, id_cita, fecha_atencion, tipo_dx, cond
+      FROM dx_occ
+      ORDER BY id_paciente, dx, fecha_atencion ASC, id_correlativo ASC
     )
     SELECT
-      c.id_cita,
-      c.tiene_pai,
-      cab.id_paciente,
-      cab.fecha_atencion,
-      d.dx,
-      d.tipo_dx,
+      pr.id_cita,
+      pr.id_paciente,
+      pr.fecha_atencion,
+      pr.dx,
+      pr.tipo_dx,
+      pr.cond,
+      (SELECT bool_or(x.codigo_item = $3) FROM atencion x WHERE x.id_cita = pr.id_cita) AS tiene_pai,
       p.numero_documento,
       p.apellido_paterno,
       p.apellido_materno,
       p.nombres
-    FROM citas c
-    JOIN cab              ON cab.id_cita = c.id_cita
-    LEFT JOIN dx d        ON d.id_cita = c.id_cita
-    LEFT JOIN paciente p  ON p.id_paciente = cab.id_paciente
-    WHERE c.es_nueva
-    ORDER BY cab.fecha_atencion ASC NULLS LAST, c.id_cita ASC
+    FROM primera pr
+    LEFT JOIN paciente p ON p.id_paciente = pr.id_paciente
+    WHERE pr.cond IN ('N', 'R')
+      AND pr.fecha_atencion >= make_date($1, $2, 1)
+      AND pr.fecha_atencion <  (make_date($1, $2, 1) + INTERVAL '1 month')
+    ORDER BY pr.fecha_atencion ASC, pr.id_cita ASC
     `,
     [anio, mes, COD_PAI]
   );
   return rows;
 }
 
-/** Evalúa las reglas de una cita y devuelve la fila enriquecida. */
+/** Evalúa las reglas de una apertura y devuelve la fila enriquecida. */
 function evaluarFila(r) {
   const errores = [];
 
-  if (!r.dx) {
-    errores.push('Sin diagnóstico CIE-10');
-  } else if (r.tipo_dx !== 'D') {
+  if (r.tipo_dx !== 'D') {
     const etiqueta = TIPO_DX_LABEL[r.tipo_dx] || r.tipo_dx || '—';
     errores.push(`Diagnóstico no definitivo (${etiqueta})`);
   }
-
   if (!r.tiene_pai) {
     errores.push(`Falta código PAI ${COD_PAI}`);
   }
@@ -114,6 +110,8 @@ function evaluarFila(r) {
     dx: r.dx || '—',
     tipo_dx: r.tipo_dx || null,
     tipo_dx_label: r.tipo_dx ? (TIPO_DX_LABEL[r.tipo_dx] || r.tipo_dx) : '—',
+    cond: r.cond,
+    cond_label: COND_LABEL[r.cond] || r.cond,
     tiene_pai: !!r.tiene_pai,
     errores,
     estado: errores.length ? 'error' : 'ok',
@@ -121,7 +119,7 @@ function evaluarFila(r) {
 }
 
 /**
- * Verifica la codificación de los usuarios nuevos de un periodo.
+ * Verifica la codificación de las aperturas de paquete de un periodo.
  * @param {{anio:number, mes:number}} params
  * @returns {Promise<{periodo:object, resumen:object, filas:object[]}>}
  */
@@ -132,13 +130,14 @@ async function verificarCodificacion({ anio, mes }) {
     throw new Error('Periodo inválido: se requiere anio y mes válidos.');
   }
 
-  const filas = (await obtenerCitasNuevas(a, m)).map(evaluarFila);
+  const filas = (await obtenerAperturas(a, m)).map(evaluarFila);
 
   const resumen = {
     total: filas.length,
+    nuevos: filas.filter((f) => f.cond === 'N').length,
+    reingresos: filas.filter((f) => f.cond === 'R').length,
     ok: filas.filter((f) => f.estado === 'ok').length,
     con_errores: filas.filter((f) => f.estado === 'error').length,
-    sin_diagnostico: filas.filter((f) => f.errores.includes('Sin diagnóstico CIE-10')).length,
     dx_no_definitivo: filas.filter((f) => f.errores.some((e) => e.startsWith('Diagnóstico no definitivo'))).length,
     sin_pai: filas.filter((f) => !f.tiene_pai).length,
   };
@@ -153,7 +152,7 @@ async function verificarCodificacion({ anio, mes }) {
 }
 
 /**
- * Genera el .docx de la verificación (tabla horizontal, una fila por cita nueva).
+ * Genera el .docx de la verificación (tabla horizontal, una fila por apertura).
  * @param {{anio:number, mes:number}} params
  * @returns {Promise<{buffer: Buffer, filename: string}|null>}
  */
@@ -166,16 +165,17 @@ async function generarReporteCodificacion({ anio, mes }) {
   const fechaEmision = `${String(hoy.getDate()).padStart(2, '0')} de ${MESES[hoy.getMonth()]} de ${hoy.getFullYear()}`;
 
   const partes = [];
-  partes.push(para([run('VERIFICACIÓN DE CODIFICACIÓN — USUARIOS NUEVOS', { bold: true, size: 28 })], { align: 'center', spacingAfter: 40 }));
+  partes.push(para([run('VERIFICACIÓN DE CODIFICACIÓN — APERTURAS DE PAQUETE', { bold: true, size: 28 })], { align: 'center', spacingAfter: 40 }));
   partes.push(para([run(`Centro de Salud Mental Comunitario RENACER · Periodo: ${nombreMes} ${periodo.anio}`, { size: 20, color: '595959' })], { align: 'center', spacingAfter: 120 }));
   partes.push(para([run(
-    `Total usuarios nuevos: ${resumen.total}  ·  Correctos: ${resumen.ok}  ·  Con errores: ${resumen.con_errores}  ` +
-    `(sin Dx: ${resumen.sin_diagnostico}, Dx no definitivo: ${resumen.dx_no_definitivo}, sin ${COD_PAI}: ${resumen.sin_pai})`,
+    `Aperturas: ${resumen.total} (nuevos: ${resumen.nuevos}, reingresos: ${resumen.reingresos})  ·  ` +
+    `Correctas: ${resumen.ok}  ·  Con errores: ${resumen.con_errores}  ` +
+    `(Dx no definitivo: ${resumen.dx_no_definitivo}, sin ${COD_PAI}: ${resumen.sin_pai})`,
     { size: 18, color: '595959' }
   )], { spacingAfter: 160 }));
 
-  const headers = ['N°', 'Fecha', 'Nombres y apellidos', 'DNI', 'Dx (CIE-10)', 'Tipo Dx', 'PAI 99366', 'Estado', 'Observación'];
-  const widths = [480, 1150, 3200, 1150, 1300, 1400, 1150, 1150, 4900];
+  const headers = ['N°', 'Fecha', 'Nombres y apellidos', 'DNI', 'Condición', 'Dx (CIE-10)', 'Tipo Dx', 'PAI 99366', 'Estado', 'Observación'];
+  const widths = [460, 1100, 3000, 1100, 1250, 1250, 1300, 1100, 1050, 4540];
 
   const filasTabla = [];
   filasTabla.push(filaTabla(headers.map((h, i) =>
@@ -192,11 +192,12 @@ async function generarReporteCodificacion({ anio, mes }) {
       [fmtFecha(f.fecha_atencion), widths[1]],
       [f.nombre, widths[2]],
       [f.dni, widths[3]],
-      [f.dx, widths[4]],
-      [f.tipo_dx_label, widths[5]],
-      [f.tiene_pai ? 'Sí' : 'No', widths[6]],
-      [estadoTxt, widths[7]],
-      [obs, widths[8]],
+      [f.cond_label, widths[4]],
+      [f.dx, widths[5]],
+      [f.tipo_dx_label, widths[6]],
+      [f.tiene_pai ? 'Sí' : 'No', widths[7]],
+      [estadoTxt, widths[8]],
+      [obs, widths[9]],
     ];
     filasTabla.push(filaTabla(celdas.map(([txt, w]) =>
       celda(run(txt, { size: 18 }), { width: w, fill })
