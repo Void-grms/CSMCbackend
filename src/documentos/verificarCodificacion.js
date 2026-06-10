@@ -46,22 +46,33 @@ async function obtenerAperturas(anio, mes) {
     WITH dx_occ AS (
       -- Cada aparición de un diagnóstico CIE-10: codigo que empieza con letra,
       -- EXCEPTO C (los códigos C son procedimientos del HIS, no diagnósticos).
+      -- tiene_pai marca si la cita de esa fila incluye el código PAI.
       SELECT a.id_paciente,
              a.codigo_item       AS dx,
              a.id_cita,
              a.fecha_atencion,
              a.id_correlativo,
              a.tipo_diagnostico   AS tipo_dx,
-             a.id_condicion_servicio AS cond
+             a.id_condicion_servicio AS cond,
+             (SELECT bool_or(x.codigo_item = $3) FROM atencion x WHERE x.id_cita = a.id_cita) AS tiene_pai
       FROM atencion a
       WHERE a.codigo_item ~* '^[abd-z]' AND a.id_paciente IS NOT NULL
     ),
     primera AS (
-      -- Primera aparición (fecha, luego correlativo) de cada (paciente, dx).
+      -- Apertura de cada (paciente, dx): se ancla en la PRIMERA fecha y, entre las
+      -- citas de ese día, se prefiere la cita de apertura real: condición N/R,
+      -- diagnóstico Definitivo y que tenga el 99366. Así un mismo dx que el primer
+      -- día aparece a la vez como D (apertura) y como R (en otra cita) toma la
+      -- correcta y no se reporta un falso error.
       SELECT DISTINCT ON (id_paciente, dx)
-             id_paciente, dx, id_cita, fecha_atencion, tipo_dx, cond
+             id_paciente, dx, id_cita, fecha_atencion, tipo_dx, cond, tiene_pai
       FROM dx_occ
-      ORDER BY id_paciente, dx, fecha_atencion ASC, id_correlativo ASC
+      ORDER BY id_paciente, dx,
+               fecha_atencion ASC,
+               (cond IN ('N', 'R')) DESC,
+               (tipo_dx = 'D') DESC,
+               tiene_pai DESC,
+               id_correlativo ASC
     )
     SELECT
       pr.id_cita,
@@ -70,7 +81,7 @@ async function obtenerAperturas(anio, mes) {
       pr.dx,
       pr.tipo_dx,
       pr.cond,
-      (SELECT bool_or(x.codigo_item = $3) FROM atencion x WHERE x.id_cita = pr.id_cita) AS tiene_pai,
+      pr.tiene_pai,
       p.numero_documento,
       p.apellido_paterno,
       p.apellido_materno,
