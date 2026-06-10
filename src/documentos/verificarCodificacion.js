@@ -31,6 +31,13 @@ const pool = new Pool({
 
 const COD_PAI = '99366';
 
+// Diagnósticos que NO requieren el código PAI 99366 al abrir (se comparan sin
+// puntos, p. ej. 'Z50.2' = 'Z502'). Ampliar aquí si aparecen más.
+const DX_SIN_PAI = new Set(['Z502']);
+
+/** Normaliza un código de diagnóstico para comparar (mayúsculas, sin puntos). */
+const normDx = (dx) => String(dx || '').toUpperCase().replace(/\./g, '');
+
 // Etiqueta legible del tipo de diagnóstico del HIS.
 const TIPO_DX_LABEL = { D: 'Definitivo', P: 'Presuntivo', R: 'Repetido' };
 // Etiqueta legible de la condición de servicio (solo aperturas).
@@ -104,12 +111,13 @@ async function obtenerAperturas(anio, mes) {
 /** Evalúa las reglas de una apertura y devuelve la fila enriquecida. */
 function evaluarFila(r) {
   const errores = [];
+  const requierePai = !DX_SIN_PAI.has(normDx(r.dx));
 
   if (r.tipo_dx !== 'D') {
     const etiqueta = TIPO_DX_LABEL[r.tipo_dx] || r.tipo_dx || '—';
     errores.push(`Diagnóstico no definitivo (${etiqueta})`);
   }
-  if (!r.tiene_pai) {
+  if (requierePai && !r.tiene_pai) {
     errores.push(`Falta código PAI ${COD_PAI}`);
   }
 
@@ -155,7 +163,8 @@ async function verificarCodificacion({ anio, mes }) {
     ok: filas.filter((f) => f.estado === 'ok').length,
     con_errores: filas.filter((f) => f.estado === 'error').length,
     dx_no_definitivo: filas.filter((f) => f.errores.some((e) => e.startsWith('Diagnóstico no definitivo'))).length,
-    sin_pai: filas.filter((f) => !f.tiene_pai).length,
+    // Solo cuenta como "sin PAI" cuando ese diagnóstico SÍ requería el 99366.
+    sin_pai: filas.filter((f) => f.errores.some((e) => e.startsWith('Falta código PAI'))).length,
   };
 
   // Errores primero (para que la auditoría salte a la vista), luego por fecha.
