@@ -44,7 +44,8 @@ async function obtenerAperturas(anio, mes) {
   const { rows } = await pool.query(
     `
     WITH dx_occ AS (
-      -- Cada aparición de un diagnóstico CIE-10 (codigo que empieza con letra).
+      -- Cada aparición de un diagnóstico CIE-10: codigo que empieza con letra,
+      -- EXCEPTO C (los códigos C son procedimientos del HIS, no diagnósticos).
       SELECT a.id_paciente,
              a.codigo_item       AS dx,
              a.id_cita,
@@ -53,7 +54,7 @@ async function obtenerAperturas(anio, mes) {
              a.tipo_diagnostico   AS tipo_dx,
              a.id_condicion_servicio AS cond
       FROM atencion a
-      WHERE a.codigo_item ~ '^[A-Za-z]' AND a.id_paciente IS NOT NULL
+      WHERE a.codigo_item ~* '^[abd-z]' AND a.id_paciente IS NOT NULL
     ),
     primera AS (
       -- Primera aparición (fecha, luego correlativo) de cada (paciente, dx).

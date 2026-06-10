@@ -194,7 +194,9 @@ async function getPacienteDetalle(idPaciente) {
        SELECT dx.codigo_item
        FROM atencion dx
        WHERE dx.id_cita = a.id_cita
-         AND dx.codigo_item ~ '^[A-Za-z]'
+         -- Diagnóstico CIE-10: empieza con letra, EXCEPTO C (los códigos C son
+         -- procedimientos del HIS, no diagnósticos).
+         AND dx.codigo_item ~* '^[abd-z]'
        ORDER BY dx.id_correlativo ASC
        LIMIT 1
      ) dxc ON TRUE
