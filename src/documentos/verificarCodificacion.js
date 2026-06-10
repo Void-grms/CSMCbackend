@@ -50,6 +50,7 @@ async function obtenerAperturas(anio, mes) {
       SELECT a.id_paciente,
              a.codigo_item       AS dx,
              a.id_cita,
+             a.id_personal,
              a.fecha_atencion,
              a.id_correlativo,
              a.tipo_diagnostico   AS tipo_dx,
@@ -65,7 +66,7 @@ async function obtenerAperturas(anio, mes) {
       -- día aparece a la vez como D (apertura) y como R (en otra cita) toma la
       -- correcta y no se reporta un falso error.
       SELECT DISTINCT ON (id_paciente, dx)
-             id_paciente, dx, id_cita, fecha_atencion, tipo_dx, cond, tiene_pai
+             id_paciente, dx, id_cita, id_personal, fecha_atencion, tipo_dx, cond, tiene_pai
       FROM dx_occ
       ORDER BY id_paciente, dx,
                fecha_atencion ASC,
@@ -85,9 +86,11 @@ async function obtenerAperturas(anio, mes) {
       p.numero_documento,
       p.apellido_paterno,
       p.apellido_materno,
-      p.nombres
+      p.nombres,
+      CONCAT_WS(' ', pro.apellido_paterno, pro.apellido_materno, pro.nombres) AS nombre_profesional
     FROM primera pr
-    LEFT JOIN paciente p ON p.id_paciente = pr.id_paciente
+    LEFT JOIN paciente p   ON p.id_paciente = pr.id_paciente
+    LEFT JOIN profesional pro ON pro.id_personal = pr.id_personal
     WHERE pr.cond IN ('N', 'R')
       AND pr.fecha_atencion >= make_date($1, $2, 1)
       AND pr.fecha_atencion <  (make_date($1, $2, 1) + INTERVAL '1 month')
@@ -119,6 +122,7 @@ function evaluarFila(r) {
     id_paciente: r.id_paciente,
     nombre,
     dni: r.numero_documento || '—',
+    profesional: (r.nombre_profesional && r.nombre_profesional.trim()) || '—',
     dx: r.dx || '—',
     tipo_dx: r.tipo_dx || null,
     tipo_dx_label: r.tipo_dx ? (TIPO_DX_LABEL[r.tipo_dx] || r.tipo_dx) : '—',
@@ -186,8 +190,8 @@ async function generarReporteCodificacion({ anio, mes }) {
     { size: 18, color: '595959' }
   )], { spacingAfter: 160 }));
 
-  const headers = ['N°', 'Fecha', 'Nombres y apellidos', 'DNI', 'Condición', 'Dx (CIE-10)', 'Tipo Dx', 'PAI 99366', 'Estado', 'Observación'];
-  const widths = [460, 1100, 3000, 1100, 1250, 1250, 1300, 1100, 1050, 4540];
+  const headers = ['N°', 'Fecha', 'Nombres y apellidos', 'DNI', 'Profesional', 'Condición', 'Dx (CIE-10)', 'Tipo Dx', 'PAI 99366', 'Estado', 'Observación'];
+  const widths = [440, 1050, 2700, 1050, 2700, 1150, 1150, 1200, 1050, 1000, 3760];
 
   const filasTabla = [];
   filasTabla.push(filaTabla(headers.map((h, i) =>
@@ -204,12 +208,13 @@ async function generarReporteCodificacion({ anio, mes }) {
       [fmtFecha(f.fecha_atencion), widths[1]],
       [f.nombre, widths[2]],
       [f.dni, widths[3]],
-      [f.cond_label, widths[4]],
-      [f.dx, widths[5]],
-      [f.tipo_dx_label, widths[6]],
-      [f.tiene_pai ? 'Sí' : 'No', widths[7]],
-      [estadoTxt, widths[8]],
-      [obs, widths[9]],
+      [f.profesional, widths[4]],
+      [f.cond_label, widths[5]],
+      [f.dx, widths[6]],
+      [f.tipo_dx_label, widths[7]],
+      [f.tiene_pai ? 'Sí' : 'No', widths[8]],
+      [estadoTxt, widths[9]],
+      [obs, widths[10]],
     ];
     filasTabla.push(filaTabla(celdas.map(([txt, w]) =>
       celda(run(txt, { size: 18 }), { width: w, fill })
