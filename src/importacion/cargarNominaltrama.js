@@ -274,9 +274,10 @@ function construirBatchSQL(cantFilas) {
 const SQL_UNA_FILA = construirBatchSQL(1);
 
 /**
- * Registra un error de fila en consola con toda la información de diagnóstico.
+ * Registra un error de fila en consola con toda la información de diagnóstico
+ * y lo acumula en `contadores.detalles_errores` para devolverlo al frontend.
  */
-function logErrorFila(fila, err, contexto = '') {
+function logErrorFila(fila, err, contadores, contexto = '') {
   const id_cita        = fila[IDX_ID_CITA]        || '?';
   const id_correlativo = fila[IDX_ID_CORRELATIVO]  ?? '?';
   console.error(`  ✖ ${contexto}Fila id_cita=${id_cita}, id_correlativo=${id_correlativo}`);
@@ -284,6 +285,15 @@ function logErrorFila(fila, err, contexto = '') {
   if (err.detail)     console.error(`    detalle:    ${err.detail}`);
   if (err.code)       console.error(`    código PG:  ${err.code}`);
   if (err.constraint) console.error(`    constraint: ${err.constraint}`);
+
+  // Acumular detalle para mostrarlo en la UI (sin tope: se guardan todos)
+  contadores.detalles_errores.push({
+    tipo:           'bd',
+    id_cita:        fila[IDX_ID_CITA] ?? null,
+    id_correlativo: fila[IDX_ID_CORRELATIVO] ?? null,
+    mensaje:        err.detail ? `${err.message} — ${err.detail}` : err.message,
+    codigo:         err.code ?? null,
+  });
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -355,7 +365,7 @@ async function flushLote(client, filas, numLote, contadores) {
         await client.query(`RELEASE SAVEPOINT ${spFila}`);
 
         contadores.errores++;
-        logErrorFila(fila, errFila);
+        logErrorFila(fila, errFila, contadores);
       }
     }
   }
@@ -448,11 +458,12 @@ async function cargarNominaltrama(rutaArchivo, usuario = 'sistema') {
 
   // Contadores (objeto mutable para pasar por referencia a flushLote)
   const contadores = {
-    total:        0,
-    insertados:   0,
-    actualizados: 0,
-    errores:      0,
-    descartadas:  0,  // filas descartadas por validación previa
+    total:            0,
+    insertados:       0,
+    actualizados:     0,
+    errores:          0,
+    descartadas:      0,  // filas descartadas por validación previa
+    detalles_errores: [], // detalle de cada fallo (validación + BD) para la UI
   };
 
   let lote    = [];
@@ -501,6 +512,13 @@ async function cargarNominaltrama(rutaArchivo, usuario = 'sistema') {
       const motivo = validarFila(valores, contadores.total);
       if (motivo) {
         contadores.descartadas++;
+        // Registrar el detalle para mostrarlo en la UI (sin tope)
+        contadores.detalles_errores.push({
+          tipo:    'validacion',
+          fila:    contadores.total,
+          id_cita: valores[IDX_ID_CITA] || (row['Id_Cita'] || '').trim() || null,
+          motivo:  motivo.replace(/^Fila \d+:\s*/, ''),
+        });
         // Solo loguear las primeras 20 para no saturar la consola
         if (contadores.descartadas <= 20) {
           console.warn(`  ⚠ ${motivo} — se omite.`);
@@ -560,6 +578,7 @@ async function cargarNominaltrama(rutaArchivo, usuario = 'sistema') {
     actualizados: contadores.actualizados,
     descartadas:  contadores.descartadas,
     errores:      contadores.errores,
+    detalles_errores:      contadores.detalles_errores,
     paquetes_recalculados: false,
     paquetes_error:        null,
   };
