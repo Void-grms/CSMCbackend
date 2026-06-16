@@ -42,6 +42,7 @@ const { getReporteHISDiario, generarExcelHISDiario } = require('../reportes/repo
 const authRoutes = require('./auth');
 const ajustesRoutes = require('./ajustes');
 const farmaciaRoutes = require('./farmacia');
+const salvavidasRoutes = require('./salvavidas');
 const verifyToken = require('../middleware/authMiddleware');
 const runMigrations = require('../db/migrate');
 
@@ -569,6 +570,9 @@ const requireAdmin = (req, res, next) => {
 
 // ── Módulo Ajustes (admin) ──
 app.use('/api/ajustes', requireAdmin, ajustesRoutes);
+
+// ── Módulo Salvavidas (admin) ──
+app.use('/api/salvavidas', requireAdmin, salvavidasRoutes);
 
 // Buscar pacientes para el módulo de documentos
 app.get('/api/documentos/buscar-paciente', requireAdmin, async (req, res) => {
