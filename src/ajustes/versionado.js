@@ -63,7 +63,7 @@ async function cargarPaqueteCompleto(client, idPaquete) {
     id_paquete:     def.id_paquete,
     version:        def.version,
     nombre:         def.nombre,
-    plazo_meses:    def.plazo_meses,
+    plazo_dias:     def.plazo_dias,
     id_actividad:   def.id_actividad,
     codigo_paquete: def.codigo_paquete,
     edad_minima:    def.edad_minima,
@@ -130,7 +130,7 @@ async function cargarVersion(client, idPaquete, version) {
     id_paquete:     def.id_paquete,
     version:        def.version,
     nombre:         def.nombre,
-    plazo_meses:    def.plazo_meses,
+    plazo_dias:     def.plazo_dias,
     id_actividad:   def.id_actividad,
     codigo_paquete: def.codigo_paquete,
     edad_minima:    def.edad_minima,
@@ -190,18 +190,18 @@ async function sincronizarTablasCanonicas(client, idPaquete, payload) {
 
   // Upsert en paquete_definicion
   await client.query(`
-    INSERT INTO paquete_definicion (id_paquete, nombre, plazo_meses, id_actividad,
+    INSERT INTO paquete_definicion (id_paquete, nombre, plazo_dias, id_actividad,
                                     codigo_paquete, edad_minima, edad_maxima)
     VALUES ($1,$2,$3,$4,$5,$6,$7)
     ON CONFLICT (id_paquete) DO UPDATE SET
       nombre = EXCLUDED.nombre,
-      plazo_meses = EXCLUDED.plazo_meses,
+      plazo_dias = EXCLUDED.plazo_dias,
       id_actividad = EXCLUDED.id_actividad,
       codigo_paquete = EXCLUDED.codigo_paquete,
       edad_minima = EXCLUDED.edad_minima,
       edad_maxima = EXCLUDED.edad_maxima
   `, [
-    payload.id_paquete, payload.nombre, payload.plazo_meses,
+    payload.id_paquete, payload.nombre, payload.plazo_dias,
     payload.id_actividad || null, payload.codigo_paquete || null,
     payload.edad_minima, payload.edad_maxima
   ]);
@@ -242,11 +242,11 @@ async function crearNuevaVersion(client, payload, usuarioId, notaCambio = null) 
 
   await client.query(`
     INSERT INTO paquete_definicion_version
-      (id_paquete, version, nombre, plazo_meses, id_actividad, codigo_paquete,
+      (id_paquete, version, nombre, plazo_dias, id_actividad, codigo_paquete,
        edad_minima, edad_maxima, activo, creado_por, nota_cambio)
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
   `, [
-    idPaquete, version, payload.nombre, payload.plazo_meses,
+    idPaquete, version, payload.nombre, payload.plazo_dias,
     payload.id_actividad || null, payload.codigo_paquete || null,
     payload.edad_minima, payload.edad_maxima,
     payload.activo !== false, usuarioId, notaCambio
@@ -334,7 +334,7 @@ function generarDiff(antes, despues) {
   const cambios = [];
   const camposSimples = [
     ['nombre', 'nombre'],
-    ['plazo_meses', 'plazo (meses)'],
+    ['plazo_dias', 'plazo (días)'],
     ['id_actividad', 'actividad'],
     ['codigo_paquete', 'código'],
     ['edad_minima', 'edad mínima'],

@@ -92,7 +92,7 @@ async function paso1_abrirPaquetes(client) {
 
   // Pre-cargar definiciones (plazo + edad) para todas las versiones actuales
   const { rows: defRows } = await client.query(`
-    SELECT pdv.id_paquete, pdv.version, pdv.plazo_meses,
+    SELECT pdv.id_paquete, pdv.version, pdv.plazo_dias,
            pdv.edad_minima, pdv.edad_maxima
     FROM paquete_definicion_version pdv
     JOIN paquete_version_actual pva
@@ -102,8 +102,8 @@ async function paso1_abrirPaquetes(client) {
   const defs = {};
   for (const r of defRows) {
     defs[r.id_paquete] = {
-      version:     r.version,
-      plazo_meses: r.plazo_meses,
+      version:    r.version,
+      plazo_dias: r.plazo_dias,
       edad_minima: r.edad_minima,
       edad_maxima: r.edad_maxima,
     };
@@ -113,7 +113,7 @@ async function paso1_abrirPaquetes(client) {
     try {
       const { id_paciente, codigo_item, id_paquete, tipo_diagnostico, valor_lab, version } = cand;
       const fechaInicio = cand.fecha_atencion;
-      const def = defs[id_paquete] || { plazo_meses: 8, edad_minima: null, edad_maxima: null, version };
+      const def = defs[id_paquete] || { plazo_dias: 269, edad_minima: null, edad_maxima: null, version };
 
       // ── Validación de edad ──
       if (cand.edad_anos !== null) {
@@ -136,17 +136,17 @@ async function paso1_abrirPaquetes(client) {
       `, [id_paquete, id_paciente, fechaInicio]);
       if (existente.length > 0) continue;
 
-      const plazoMeses = def.plazo_meses || 8;
+      const plazoDias = def.plazo_dias || 269;
 
       await client.query(`
         INSERT INTO paquete_paciente
           (id_paquete, id_paciente, fecha_inicio, fecha_limite, estado,
            dx_principal, tipo_diagnostico_dx, valor_lab_dx, version_catalogo)
         VALUES
-          ($1, $2, $3, $3::DATE + ($4 || ' months')::INTERVAL, 'abierto',
+          ($1, $2, $3, $3::DATE + ($4 || ' days')::INTERVAL, 'abierto',
            $5, $6, $7, $8)
         ON CONFLICT (id_paquete, id_paciente, fecha_inicio) DO NOTHING
-      `, [id_paquete, id_paciente, fechaInicio, plazoMeses,
+      `, [id_paquete, id_paciente, fechaInicio, plazoDias,
           codigo_item, tipo_diagnostico, valor_lab, def.version]);
 
       contadores.nuevosAbiertos++;

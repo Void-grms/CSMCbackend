@@ -89,7 +89,7 @@ async function getAvancePaquete(idPaquetePaciente) {
     SELECT
       pp.*,
       pd.nombre      AS nombre_paquete,
-      pd.plazo_meses,
+      pd.plazo_dias,
       p.id_paciente,
       p.numero_documento AS dni,
       p.apellido_paterno,
@@ -726,4 +726,5 @@ module.exports = {
   getPaquetesPorPaciente,
   getPaquetesPorProfesional,
   getPaquetesPaginados,
+  calcularAvanceComponentes,
 };

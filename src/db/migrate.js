@@ -10,7 +10,8 @@ const migrations = [
   'migration_v2.sql',
   'seed_paquetes.sql',
   'migration_v3_ajustes.sql',
-  'migration_v4_farmacia.sql'
+  'migration_v4_farmacia.sql',
+  'migration_v5_plazo_dias.sql'
 ];
 
 /**

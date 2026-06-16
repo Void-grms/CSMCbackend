@@ -41,8 +41,8 @@ function validarPaquetePayload(p) {
     errores.push('id_paquete inválido (mayúsculas/dígitos/guión bajo, 2-50 chars).');
   }
   if (!p.nombre || !p.nombre.trim()) errores.push('Nombre requerido.');
-  if (!Number.isInteger(p.plazo_meses) || p.plazo_meses < 1 || p.plazo_meses > 60) {
-    errores.push('plazo_meses debe ser entero entre 1 y 60.');
+  if (!Number.isInteger(p.plazo_dias) || p.plazo_dias < 1 || p.plazo_dias > 1000) {
+    errores.push('plazo_dias debe ser entero entre 1 y 1000.');
   }
   if (p.edad_minima != null && (!Number.isInteger(p.edad_minima) || p.edad_minima < 0 || p.edad_minima > 120)) {
     errores.push('edad_minima fuera de rango.');
@@ -107,7 +107,7 @@ router.get('/paquetes', async (req, res) => {
         pdv.version            AS version_actual,
         pdv.nombre,
         pdv.codigo_paquete,
-        pdv.plazo_meses,
+        pdv.plazo_dias,
         pdv.id_actividad,
         pdv.edad_minima,
         pdv.edad_maxima,
