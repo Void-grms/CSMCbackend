@@ -11,7 +11,8 @@ const migrations = [
   'seed_paquetes.sql',
   'migration_v3_ajustes.sql',
   'migration_v4_farmacia.sql',
-  'migration_v5_plazo_dias.sql'
+  'migration_v5_plazo_dias.sql',
+  'migration_v6_correcciones_md_2026.sql'
 ];
 
 /**
