@@ -494,6 +494,50 @@ app.delete('/api/database/limpiar-periodo', async (req, res) => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════════
+// ENDPOINT 10E — Recalcular paquetes (sin borrar atenciones)
+// ═════════════════════════════════════════════════════════════════════════════
+// Reconstruye `paquete_paciente` desde cero a partir de las atenciones ya cargadas
+// y el catálogo ACTUAL. Útil tras actualizar el catálogo: aplica los cambios sin
+// tener que borrar atenciones ni volver a subir los CSV. No toca `atencion`,
+// `historial_cargas` ni los maestros.
+app.post('/api/database/recalcular', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    // 1. Vaciar los paquetes derivados (calcularPaquetes es aditivo: sin este
+    //    TRUNCATE quedarían paquetes con la versión vieja del catálogo).
+    await client.query('BEGIN');
+    await client.query('TRUNCATE TABLE paquete_paciente CASCADE');
+    await client.query('COMMIT');
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch (_) { /* noop */ }
+    client.release();
+    console.error('Error /api/database/recalcular (truncate):', err.message);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+  client.release();
+
+  // 2. Reconstruir paquetes con las atenciones restantes (fuera de la transacción;
+  //    calcularPaquetes gestiona sus propias transacciones).
+  let contadores = null;
+  let paquetesError = null;
+  try {
+    contadores = await calcularPaquetes();
+  } catch (err) {
+    paquetesError = err.message;
+    console.error('⚠ Recálculo de paquetes falló:', err.message);
+  }
+
+  res.json({
+    ok: paquetesError === null,
+    contadores,
+    paquetes_error: paquetesError,
+    mensaje: paquetesError
+      ? `El recálculo falló: ${paquetesError}`
+      : 'Paquetes recalculados a partir de las atenciones cargadas.',
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
 // ENDPOINT 11 — Reporte de Producción por Profesional
 // ═════════════════════════════════════════════════════════════════════════════
 app.get('/api/reportes/produccion-profesional', async (req, res) => {
