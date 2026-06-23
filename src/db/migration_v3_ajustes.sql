@@ -134,15 +134,27 @@ ALTER TABLE usuarios
 -- 6. BACKFILL: crear versión 1 de cada paquete existente
 -- ─────────────────────────────────────────────────────────────────────────────
 
--- 6a. Snapshot inicial de definiciones
-INSERT INTO paquete_definicion_version
-    (id_paquete, version, nombre, plazo_meses, id_actividad, codigo_paquete,
-     edad_minima, edad_maxima, activo, nota_cambio)
-SELECT
-    id_paquete, 1, nombre, plazo_meses, id_actividad, codigo_paquete,
-    edad_minima, edad_maxima, TRUE, 'Versión inicial (backfill v3)'
-FROM paquete_definicion
-ON CONFLICT (id_paquete, version) DO NOTHING;
+-- 6a. Snapshot inicial de definiciones.
+-- Tolerante a re-ejecución: migration_v5 renombra plazo_meses → plazo_dias. En un
+-- redeploy esta migración vuelve a correr cuando la columna ya es plazo_dias, así que
+-- referenciar plazo_meses rompería el resto de migraciones (incluida v6). Si la
+-- columna ya fue renombrada, el backfill ya se hizo en su momento y se omite.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'paquete_definicion_version' AND column_name = 'plazo_meses'
+  ) THEN
+    INSERT INTO paquete_definicion_version
+        (id_paquete, version, nombre, plazo_meses, id_actividad, codigo_paquete,
+         edad_minima, edad_maxima, activo, nota_cambio)
+    SELECT
+        id_paquete, 1, nombre, plazo_meses, id_actividad, codigo_paquete,
+        edad_minima, edad_maxima, TRUE, 'Versión inicial (backfill v3)'
+    FROM paquete_definicion
+    ON CONFLICT (id_paquete, version) DO NOTHING;
+  END IF;
+END $$;
 
 -- 6b. Snapshot inicial de componentes
 INSERT INTO paquete_detalle_version
