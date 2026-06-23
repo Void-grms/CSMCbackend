@@ -510,13 +510,13 @@ app.post('/api/database/recalcular', async (req, res) => {
     await client.query('COMMIT');
   } catch (err) {
     try { await client.query('ROLLBACK'); } catch (_) { /* noop */ }
-    client.release();
     console.error('Error /api/database/recalcular (truncate):', err.message);
     return res.status(500).json({ ok: false, error: err.message });
+  } finally {
+    client.release();
   }
-  client.release();
 
-  // 2. Reconstruir paquetes con las atenciones restantes (fuera de la transacción;
+  // 2. Reconstruir paquetes con las atenciones restantes (operación aparte;
   //    calcularPaquetes gestiona sus propias transacciones).
   let contadores = null;
   let paquetesError = null;
