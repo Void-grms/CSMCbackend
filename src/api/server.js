@@ -13,6 +13,7 @@ const cors = require('cors');
 
 const {
   getDashboard,
+  getDetalleAcpDashboard,
   getProximosAVencer,
   getAvancePaquete,
   getPaquetesPorPaciente,
@@ -137,6 +138,16 @@ app.get('/api/dashboard', async (req, res) => {
   }
 });
 
+app.get('/api/dashboard/acp-detalle', async (req, res) => {
+  try {
+    const registros = await getDetalleAcpDashboard(req.query.anio, req.query.mes);
+    res.json({ total: registros.length, registros });
+  } catch (err) {
+    console.error('Error /api/dashboard/acp-detalle:', err.message);
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
 // ═════════════════════════════════════════════════════════════════════════════
 // ENDPOINT 2 — Próximos a vencer
 // ═════════════════════════════════════════════════════════════════════════════
@@ -158,13 +169,15 @@ app.get('/api/paquetes', async (req, res) => {
   try {
     // Si estado='todos', pasamos undefined para que no filtre
     const estadoQuery = req.query.estado === 'todos' ? undefined : req.query.estado;
-    const { periodo, tipo, dx, campoFecha, fechaDesde, fechaHasta, ordenDias } = req.query;
+    const { periodo, anio, mes, tipo, dx, campoFecha, fechaDesde, fechaHasta, ordenDias } = req.query;
     const limite = safeInt(req.query.limite, 50);
     const offset = safeInt(req.query.offset, 0);
 
     const data = await getPaquetesPaginados({
       estado: estadoQuery,
       periodo,
+      anio,
+      mes,
       tipo,
       dx,
       campoFecha,
