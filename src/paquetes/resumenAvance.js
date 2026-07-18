@@ -417,13 +417,50 @@ async function getDashboard(anio) {
   const paquetes = Object.values(paquetesMap);
 
   // ── Acompañamiento Clínico Psicosocial (ACP) ──
+  // En APP100 cada casillero LAB llega como una fila independiente. Una sesion
+  // valida para la meta del coordinador se codifica con tres filas C7004:
+  // LAB 1 = ACP, LAB 2 = numero de sesion (1..10) y LAB 3 = cantidad de
+  // personal que recibio el ACP (> 0). C7002 es supervision y no suma.
+  // Agrupar primero por cita evita contar tres veces una misma sesion.
+  const filtroAnioAcp = anio && anio !== 'todos'
+    ? 'AND EXTRACT(YEAR FROM fecha_atencion) = $1'
+    : '';
   const { rows: acpRows } = await pool.query(`
+    WITH sesiones_acp_validas AS (
+      SELECT
+        id_cita,
+        fecha_atencion
+      FROM atencion
+      WHERE UPPER(TRIM(id_actividad)) = 'APP100'
+        AND UPPER(TRIM(codigo_item)) = 'C7004'
+        AND UPPER(TRIM(tipo_diagnostico)) = 'D'
+        ${filtroAnioAcp}
+      GROUP BY id_cita, fecha_atencion
+      HAVING COUNT(*) FILTER (
+               WHERE id_correlativo_lab = 1
+                 AND UPPER(TRIM(valor_lab)) = 'ACP'
+             ) > 0
+         AND COUNT(*) FILTER (
+               WHERE id_correlativo_lab = 2
+                 AND CASE
+                       WHEN TRIM(valor_lab) ~ '^[0-9]+$'
+                       THEN TRIM(valor_lab)::INT
+                     END BETWEEN 1 AND 10
+             ) > 0
+         AND COUNT(*) FILTER (
+               WHERE id_correlativo_lab = 3
+                 AND CASE
+                       WHEN TRIM(valor_lab) ~ '^[0-9]+$'
+                       THEN TRIM(valor_lab)::INT
+                     END > 0
+             ) > 0
+    )
     SELECT
       EXTRACT(MONTH FROM fecha_atencion)::INT AS mes,
       COUNT(*)::INT AS cantidad
-    FROM atencion
-    WHERE id_actividad ILIKE 'APP%' ${joinWhere.replace('pp.fecha_inicio', 'fecha_atencion')}
+    FROM sesiones_acp_validas
     GROUP BY EXTRACT(MONTH FROM fecha_atencion)
+    ORDER BY mes
   `, porTipoParams);
 
   let totalAcp = 0;
@@ -439,6 +476,7 @@ async function getDashboard(anio) {
     acpPaquete = {
       id_paquete: 'ACP_001',
       nombre_paquete: 'Acompañamiento Clínico Psicosocial',
+      es_acp: true,
       act_codigo: '-',
       act_nombre: 'Acompañamiento',
       meta: 12, 
@@ -448,6 +486,11 @@ async function getDashboard(anio) {
     paquetes.push(acpPaquete);
   } else {
     acpPaquete.meta = 12;
+    acpPaquete.es_acp = true;
+    // Esta fila representa exclusivamente sesiones APP100 válidas; no debe
+    // mezclar posibles asignaciones de paquete_paciente con el conteo ACP.
+    acpPaquete.meses = new Array(12).fill(0);
+    acpPaquete.total_acumulado = 0;
   }
   
   for (const r of acpRows) {
@@ -588,7 +631,7 @@ async function getPaquetesPorProfesional(idPersonal) {
 // ═════════════════════════════════════════════════════════════════════════════
 
 async function getPaquetesPaginados(filtros = {}) {
-  const { estado, periodo, tipo, dx, campoFecha, fechaDesde, fechaHasta, ordenDias, limite = 50, offset = 0 } = filtros;
+  const { estado, periodo, anio, mes, tipo, dx, campoFecha, fechaDesde, fechaHasta, ordenDias, limite = 50, offset = 0 } = filtros;
 
   const condiciones = [];
   const valores     = [];
@@ -630,6 +673,23 @@ async function getPaquetesPaginados(filtros = {}) {
       `pp.fecha_inicio >= DATE_TRUNC('month', $${valores.length}::date)
        AND pp.fecha_inicio < DATE_TRUNC('month', $${valores.length}::date) + INTERVAL '1 month'`
     );
+  }
+
+  if (anio && anio !== 'todos') {
+    const anioNumero = Number(anio);
+    if (!Number.isInteger(anioNumero) || anioNumero < 2000 || anioNumero > 2100) {
+      throw new Error('Anio invalido');
+    }
+    valores.push(anioNumero);
+    condiciones.push(`EXTRACT(YEAR FROM pp.fecha_inicio) = $${valores.length}`);
+  }
+  if (mes) {
+    const mesNumero = Number(mes);
+    if (!Number.isInteger(mesNumero) || mesNumero < 1 || mesNumero > 12) {
+      throw new Error('Mes invalido');
+    }
+    valores.push(mesNumero);
+    condiciones.push(`EXTRACT(MONTH FROM pp.fecha_inicio) = $${valores.length}`);
   }
 
   if ((campoFecha === 'fecha_inicio' || campoFecha === 'fecha_limite')) {
@@ -718,11 +778,109 @@ async function getPaquetesPaginados(filtros = {}) {
   return resultado;
 }
 
+// Sesiones APP100/C7004 que respaldan el conteo ACP del dashboard.
+async function getDetalleAcpDashboard(anio, mes) {
+  const condiciones = ["UPPER(TRIM(a.id_actividad)) = 'APP100'"];
+  const valores = [];
+
+  if (anio && anio !== 'todos') {
+    const numero = Number(anio);
+    if (!Number.isInteger(numero) || numero < 2000 || numero > 2100) {
+      throw new Error('Anio invalido');
+    }
+    valores.push(numero);
+    condiciones.push(`EXTRACT(YEAR FROM a.fecha_atencion) = $${valores.length}`);
+  }
+
+  if (mes !== undefined && mes !== null && mes !== '') {
+    const numero = Number(mes);
+    if (!Number.isInteger(numero) || numero < 1 || numero > 12) {
+      throw new Error('Mes invalido');
+    }
+    valores.push(numero);
+    condiciones.push(`EXTRACT(MONTH FROM a.fecha_atencion) = $${valores.length}`);
+  }
+
+  const { rows } = await pool.query(`
+    WITH sesiones AS (
+      SELECT
+        a.id_cita,
+        a.fecha_atencion,
+        MAX(a.id_personal) AS id_personal,
+        MAX(a.id_establecimiento) AS id_establecimiento,
+        MAX(a.valor_lab) FILTER (
+          WHERE UPPER(TRIM(a.codigo_item)) = 'C7004'
+            AND UPPER(TRIM(a.tipo_diagnostico)) = 'D'
+            AND a.id_correlativo_lab = 2
+        ) AS numero_sesion,
+        MAX(a.valor_lab) FILTER (
+          WHERE UPPER(TRIM(a.codigo_item)) = 'C7004'
+            AND UPPER(TRIM(a.tipo_diagnostico)) = 'D'
+            AND a.id_correlativo_lab = 3
+        ) AS cantidad_personal,
+        MAX(a.valor_lab) FILTER (
+          WHERE UPPER(TRIM(a.codigo_item)) = 'C7002'
+            AND UPPER(TRIM(a.tipo_diagnostico)) = 'D'
+            AND a.id_correlativo_lab = 1
+        ) AS profesion_codigo,
+        MAX(a.valor_lab) FILTER (
+          WHERE UPPER(TRIM(a.codigo_item)) = 'C7002'
+            AND UPPER(TRIM(a.tipo_diagnostico)) = 'D'
+            AND a.id_correlativo_lab = 2
+        ) AS eess_numero
+      FROM atencion a
+      WHERE ${condiciones.join(' AND ')}
+      GROUP BY a.id_cita, a.fecha_atencion
+      HAVING COUNT(*) FILTER (
+               WHERE UPPER(TRIM(a.codigo_item)) = 'C7004'
+                 AND UPPER(TRIM(a.tipo_diagnostico)) = 'D'
+                 AND a.id_correlativo_lab = 1
+                 AND UPPER(TRIM(a.valor_lab)) = 'ACP'
+             ) > 0
+         AND COUNT(*) FILTER (
+               WHERE UPPER(TRIM(a.codigo_item)) = 'C7004'
+                 AND UPPER(TRIM(a.tipo_diagnostico)) = 'D'
+                 AND a.id_correlativo_lab = 2
+                 AND CASE WHEN TRIM(a.valor_lab) ~ '^[0-9]+$'
+                          THEN TRIM(a.valor_lab)::INT END BETWEEN 1 AND 10
+             ) > 0
+         AND COUNT(*) FILTER (
+               WHERE UPPER(TRIM(a.codigo_item)) = 'C7004'
+                 AND UPPER(TRIM(a.tipo_diagnostico)) = 'D'
+                 AND a.id_correlativo_lab = 3
+                 AND CASE WHEN TRIM(a.valor_lab) ~ '^[0-9]+$'
+                          THEN TRIM(a.valor_lab)::INT END > 0
+             ) > 0
+    )
+    SELECT
+      s.*,
+      NULLIF(TRIM(CONCAT_WS(' ', p.apellido_paterno, p.apellido_materno, p.nombres)), '') AS coordinador,
+      p.numero_documento AS coordinador_documento,
+      p.id_profesion AS coordinador_profesion
+    FROM sesiones s
+    LEFT JOIN profesional p ON p.id_personal = s.id_personal
+    ORDER BY s.fecha_atencion DESC, s.id_cita DESC
+  `, valores);
+
+  const profesiones = {
+    1: 'Medico psiquiatra', 2: 'Psicologo(a)', 3: 'Enfermero(a)',
+    4: 'Trabajador(a) social', 5: 'Medico de familia', 6: 'Otros',
+  };
+
+  return rows.map(r => ({
+    ...r,
+    numero_sesion: parseInt(r.numero_sesion, 10),
+    cantidad_personal: parseInt(r.cantidad_personal, 10),
+    profesion_actividad: profesiones[parseInt(r.profesion_codigo, 10)] || null,
+  }));
+}
+
 // ── Exportar ──────────────────────────────────────────────────────────────────
 module.exports = {
   getAvancePaquete,
   getProximosAVencer,
   getDashboard,
+  getDetalleAcpDashboard,
   getPaquetesPorPaciente,
   getPaquetesPorProfesional,
   getPaquetesPaginados,
