@@ -877,9 +877,32 @@ async function getDetalleAcpDashboard(anio, mes) {
       s.*,
       NULLIF(TRIM(CONCAT_WS(' ', p.apellido_paterno, p.apellido_materno, p.nombres)), '') AS coordinador,
       p.numero_documento AS coordinador_documento,
-      p.id_profesion AS coordinador_profesion
+      p.id_profesion AS coordinador_profesion,
+      COALESCE(detalle.registros_cita, '[]'::JSONB) AS registros_cita
     FROM sesiones s
     LEFT JOIN profesional p ON p.id_personal = s.id_personal
+    LEFT JOIN LATERAL (
+      SELECT JSONB_AGG(
+        JSONB_BUILD_OBJECT(
+          'id_correlativo', d.id_correlativo,
+          'codigo_item', d.codigo_item,
+          'tipo_diagnostico', NULLIF(TRIM(d.tipo_diagnostico), ''),
+          'valor_lab', d.valor_lab,
+          'id_correlativo_lab', d.id_correlativo_lab,
+          'id_actividad', d.id_actividad,
+          'id_personal', d.id_personal,
+          'id_establecimiento', d.id_establecimiento,
+          'id_registrador', d.id_registrador,
+          'registrador', NULLIF(TRIM(CONCAT_WS(' ', rg.apellido_paterno, rg.apellido_materno, rg.nombres)), ''),
+          'fecha_registro', d.fecha_registro,
+          'fecha_modificacion', d.fecha_modificacion
+        ) ORDER BY d.id_correlativo
+      ) AS registros_cita
+      FROM atencion d
+      LEFT JOIN registrador rg ON rg.id_registrador = d.id_registrador
+      WHERE d.id_cita = s.id_cita
+        AND d.fecha_atencion = s.fecha_atencion
+    ) detalle ON TRUE
     ORDER BY s.fecha_atencion DESC, s.id_cita DESC
   `, valores);
 
