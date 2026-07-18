@@ -420,7 +420,9 @@ async function getDashboard(anio) {
   // En APP100 cada casillero LAB llega como una fila independiente. Una sesion
   // valida para la meta del coordinador se codifica con tres filas C7004:
   // LAB 1 = ACP, LAB 2 = numero de sesion (1..10) y LAB 3 = cantidad de
-  // personal que recibio el ACP (> 0). C7002 es supervision y no suma.
+  // personal que recibio el ACP (> 0). Ademas, C7002 (supervision) debe tener
+  // LAB 2 = EESS asignado (1..4). Ese segundo LAB distingue al coordinador del
+  // personal de apoyo, que registra solo su profesion en LAB 1 y no suma.
   // Agrupar primero por cita evita contar tres veces una misma sesion.
   const filtroAnioAcp = anio && anio !== 'todos'
     ? 'AND EXTRACT(YEAR FROM fecha_atencion) = $1'
@@ -432,27 +434,37 @@ async function getDashboard(anio) {
         fecha_atencion
       FROM atencion
       WHERE UPPER(TRIM(id_actividad)) = 'APP100'
-        AND UPPER(TRIM(codigo_item)) = 'C7004'
         AND UPPER(TRIM(tipo_diagnostico)) = 'D'
         ${filtroAnioAcp}
       GROUP BY id_cita, fecha_atencion
       HAVING COUNT(*) FILTER (
-               WHERE id_correlativo_lab = 1
+               WHERE UPPER(TRIM(codigo_item)) = 'C7004'
+                 AND id_correlativo_lab = 1
                  AND UPPER(TRIM(valor_lab)) = 'ACP'
              ) > 0
          AND COUNT(*) FILTER (
-               WHERE id_correlativo_lab = 2
+               WHERE UPPER(TRIM(codigo_item)) = 'C7004'
+                 AND id_correlativo_lab = 2
                  AND CASE
                        WHEN TRIM(valor_lab) ~ '^[0-9]+$'
                        THEN TRIM(valor_lab)::INT
                      END BETWEEN 1 AND 10
              ) > 0
          AND COUNT(*) FILTER (
-               WHERE id_correlativo_lab = 3
+               WHERE UPPER(TRIM(codigo_item)) = 'C7004'
+                 AND id_correlativo_lab = 3
                  AND CASE
                        WHEN TRIM(valor_lab) ~ '^[0-9]+$'
                        THEN TRIM(valor_lab)::INT
                      END > 0
+             ) > 0
+         AND COUNT(*) FILTER (
+               WHERE UPPER(TRIM(codigo_item)) = 'C7002'
+                 AND id_correlativo_lab = 2
+                 AND CASE
+                       WHEN TRIM(valor_lab) ~ '^[0-9]+$'
+                       THEN TRIM(valor_lab)::INT
+                     END BETWEEN 1 AND 4
              ) > 0
     )
     SELECT
@@ -827,6 +839,8 @@ async function getDetalleAcpDashboard(anio, mes) {
           WHERE UPPER(TRIM(a.codigo_item)) = 'C7002'
             AND UPPER(TRIM(a.tipo_diagnostico)) = 'D'
             AND a.id_correlativo_lab = 2
+            AND CASE WHEN TRIM(a.valor_lab) ~ '^[0-9]+$'
+                     THEN TRIM(a.valor_lab)::INT END BETWEEN 1 AND 4
         ) AS eess_numero
       FROM atencion a
       WHERE ${condiciones.join(' AND ')}
@@ -850,6 +864,13 @@ async function getDetalleAcpDashboard(anio, mes) {
                  AND a.id_correlativo_lab = 3
                  AND CASE WHEN TRIM(a.valor_lab) ~ '^[0-9]+$'
                           THEN TRIM(a.valor_lab)::INT END > 0
+             ) > 0
+         AND COUNT(*) FILTER (
+               WHERE UPPER(TRIM(a.codigo_item)) = 'C7002'
+                 AND UPPER(TRIM(a.tipo_diagnostico)) = 'D'
+                 AND a.id_correlativo_lab = 2
+                 AND CASE WHEN TRIM(a.valor_lab) ~ '^[0-9]+$'
+                          THEN TRIM(a.valor_lab)::INT END BETWEEN 1 AND 4
              ) > 0
     )
     SELECT
